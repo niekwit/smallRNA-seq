@@ -37,21 +37,27 @@ length_distributions <- lapply(fasta_files, function(fasta_file) {
 df <- bind_rows(length_distributions) %>%
   # Only keep lengths from 18 to 32
   filter(length >= 18 & length <= 32) %>%
-  # Calculate frequency and SEM for each condition and length
+  # Sum of counts per sample
   group_by(sample) %>%
-  mutate(total_count = sum(count), frequency = count / total_count) %>%
+  mutate(sample_sum = sum(count)) %>%
+  # Calculate frequency and SEM for each condition and length
+  group_by(length) %>%
+  mutate(sample_frequency = count / sample_sum) %>%
   ungroup() %>%
   # Calculate SEM per length across samples of the same condition
   group_by(condition, length) %>%
-  mutate(sem = sd(frequency) / sqrt(n())) %>%
+  mutate(
+    condition_frequency = mean(sample_frequency),
+    sem = sd(sample_frequency) / sqrt(n())
+  ) %>%
   ungroup()
 
 # Create line plot with error bars
-p <- ggplot(df, aes(x = length, y = frequency, color = condition)) +
-  geom_line(aes(group = sample), alpha = 0.3) +
+p <- ggplot(df, aes(x = length, y = condition_frequency, color = condition)) +
+  geom_line(aes(group = sample)) +
   geom_point() +
   geom_errorbar(
-    aes(ymin = frequency - sem, ymax = frequency + sem),
+    aes(ymin = condition_frequency - sem, ymax = condition_frequency + sem),
     width = 0.2,
     color = "black"
   ) +
