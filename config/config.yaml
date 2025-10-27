@@ -1,8 +1,13 @@
-samplesheet: ".test/config/samples.tsv"
+genome: mm39 # hg38 or mm39
 
-get_genome:
-  ncbi_ftp: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz
-
-simulate_reads:
-  read_length: 100
-  read_number: 10000
+cutadapt:
+  adapter: AGATCGGAAGA
+  extra: ""
+# TEsmall parameters
+#three_prime_adapter: AGATCGGAAGA # 3' adapter sequence for trimming
+#minlen: 16
+#maxlen: 36
+#maxaln: 100
+#threads: 8
+#mismatch: 0
+#extra_args: ""

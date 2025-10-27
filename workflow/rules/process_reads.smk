@@ -1,112 +1,64 @@
-# ----------------------------------------------------- #
-# EXAMPLE WORKFLOW                                      #
-# ----------------------------------------------------- #
-
-
-# fetch genome sequence from NCBI
+# Adapter sequence removal
 # -----------------------------------------------------
-rule get_genome:
+rule trim_adapters:
+    input:
+        read="reads/{sample}.fastq.gz",
     output:
-        fasta="results/get_genome/genome.fna",
-    conda:
-        "../envs/get_genome.yaml"
-    message:
-        """--- Downloading genome sequence."""
+        trimmed="results/trimmed/{sample}_trimmed.fastq.gz",
     params:
-        ncbi_ftp=lookup(within=config, dpath="get_genome/ncbi_ftp"),
-    log:
-        "results/get_genome/genome.log",
+        adapter=config["cutadapt"]["adapter"],
+        extra=config["cutadapt"]["extra"]
+    threads: 4
+    conda:
+        "../envs/process_reads.yaml"
     shell:
-        "wget -O results/get_genome/genome.fna.gz {params.ncbi_ftp} > {log} 2>&1 && "
-        "gunzip results/get_genome/genome.fna.gz >> {log} 2>&1"
+        "cutadapt "
+        "-j {threads} "
+        "-m 16 "
+        "--trimmed-only "
+        "-a {params.adapter} "
+        "-o {output.trimmed} "
+        "{params.extra} "     
+        "{input.read}"
 
 
-# validate genome sequence file
+
+# Get just sequence from reads (every 4th line, starting at line 2)
 # -----------------------------------------------------
-rule validate_genome:
+rule get_sequence:
     input:
-        fasta=rules.get_genome.output.fasta,
+        trimmed="results/trimmed/{sample}_trimmed.fastq.gz",
     output:
-        fasta="results/validate_genome/genome.fna",
+        seqs="results/seqs/{sample}_seqs.txt",
     conda:
-        "../envs/validate_genome.yaml"
-    message:
-        """--- Validating genome sequence file."""
-    log:
-        "results/validate_genome/genome.log",
-    script:
-        "../scripts/validate_fasta.py"
-
-
-# simulate read data using DWGSIM
-# -----------------------------------------------------
-rule simulate_reads:
-    input:
-        fasta=rules.validate_genome.output.fasta,
-    output:
-        multiext(
-            "results/simulate_reads/{sample}",
-            read1=".bwa.read1.fastq.gz",
-            read2=".bwa.read2.fastq.gz",
-        ),
-    conda:
-        "../envs/simulate_reads.yaml"
-    message:
-        """--- Simulating read data with DWGSIM."""
-    params:
-        output_type=1,
-        read_length=lookup(within=config, dpath="simulate_reads/read_length"),
-        read_number=lookup(within=config, dpath="simulate_reads/read_number"),
-    log:
-        "results/simulate_reads/{sample}.log",
+        "../envs/process_reads.yaml"
     shell:
-        "output_prefix=`echo {output.read1} | cut -f 1 -d .`;"
-        "dwgsim "
-        " -1 {params.read_length}"
-        " -2 {params.read_length}"
-        " -N {params.read_number}"
-        " -o {params.output_type}"
-        " {input.fasta}"
-        " ${{output_prefix}}"
-        " > {log} 2>&1"
+        "zcat {input.trimmed} | sed -n '2~4p' > {output.seqs}"
 
 
-# make QC report
+# Count unique sequences
 # -----------------------------------------------------
-rule fastqc:
+rule count_unique_sequences:
     input:
-        fastq="results/simulate_reads/{sample}.bwa.{read}.fastq.gz",
+        seqs="results/seqs/{sample}_seqs.txt",
     output:
-        html="results/fastqc/{sample}.bwa.{read}_fastqc.html",
-        zip="results/fastqc/{sample}.bwa.{read}_fastqc.zip",
-    params:
-        extra="--quiet",
-    message:
-        """--- Checking fastq files with FastQC."""
-    log:
-        "results/fastqc/{sample}.bwa.{read}.log",
-    threads: 1
-    wrapper:
-        "v6.0.0/bio/fastqc"
+        counts="results/counts/{sample}_unique_counts.txt",
+    conda:
+        "../envs/process_reads.yaml"
+    shell:
+        r"""sort {input.seqs} | uniq -c | awk '{{print $2"\t"$1}}' > {output.counts}"""
 
 
-# run multiQC on tool output
+# Create count fasta file
+# Format: >sequence:length:count
 # -----------------------------------------------------
-rule multiqc:
+rule create_count_fasta:
     input:
-        expand(
-            "results/fastqc/{sample}.bwa.{read}_fastqc.{ext}",
-            sample=samples.index,
-            read=["read1", "read2"],
-            ext=["html", "zip"],
-        ),
+        counts="results/counts/{sample}_unique_counts.txt",
     output:
-        report="results/multiqc/multiqc_report.html",
-    params:
-        extra="--verbose --dirs",
-    message:
-        """--- Generating MultiQC report for seq data."""
-    log:
-        "results/multiqc/multiqc.log",
-    wrapper:
-        "v6.0.0/bio/multiqc"
+        fasta="results/fasta/{sample}_counts.fasta",
+    conda:
+        "../envs/process_reads.yaml"
+    shell:
+        r"""awk '{{print ">" $1 ":" length($1) ":" $2 "\n" $1}}' {input.counts} > {output.fasta}"""
+

@@ -1,0 +1,7 @@
+name: process_reads
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - bioconda::cutadapt=5.1

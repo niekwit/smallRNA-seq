@@ -1,8 +1,5 @@
-# Main entrypoint of the workflow.
-# Please follow the best practices:
-# https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
-# in particular regarding the standardized folder structure mentioned there.
-
+# Based on:
+# https://github.com/rberrens/SPOCD1-piRNA_directed_DNA_met/tree/master/piRNA_analysis
 
 # load configuration
 # -----------------------------------------------------
@@ -12,11 +9,15 @@ configfile: "config/config.yaml"
 # load rules
 # -----------------------------------------------------
 include: "rules/common.smk"
+
+
+#GENOME = config["genome"]
+SAMPLES = samples()
+
 include: "rules/process_reads.smk"
+include: "rules/plotting.smk"
+#include: "rules/resources.smk"
 
-
-# optional messages, log and error handling
-# -----------------------------------------------------
 onstart:
     print("\n--- Analysis started ---\n")
 
@@ -33,5 +34,6 @@ onerror:
 # -----------------------------------------------------
 rule all:
     input:
-        "results/multiqc/multiqc_report.html",
-    default_target: True
+        #expand("results/fasta/{sample}_counts.fasta", sample=SAMPLES),
+        #"results/multiqc/multiqc_report.html",
+        "results/plots/length_distribution.pdf"
