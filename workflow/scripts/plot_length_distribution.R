@@ -74,3 +74,29 @@ p <- ggplot(df, aes(x = length, y = condition_frequency, color = condition)) +
 
 # Save plot
 ggsave(filename = snakemake@output[["pdf"]], plot = p, width = 6, height = 4)
+
+# Save data as CSV
+# Only keep and save unique condition, length, condition_frequency, sem
+df_output <- df %>%
+  # Add columns with sums per condition and length, and total sum
+  group_by(condition) %>%
+  mutate(
+    condition_sum = sum(count)
+  ) %>%
+  group_by(length) %>%
+  mutate(
+    length_sum = sum(count)
+  ) %>%
+  select(
+    condition,
+    length,
+    length_sum,
+    condition_sum,
+    condition_frequency,
+    sem
+  ) %>%
+  unique() %>%
+  arrange(condition, length)
+
+# Save to CSV
+write_csv(df_output, snakemake@output[["csv"]])
