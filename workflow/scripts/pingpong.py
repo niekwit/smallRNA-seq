@@ -31,7 +31,6 @@ This is calculated for all combinations of sense and antisense reads mapping to 
 """
 
 import csv
-import argparse
 from collections import defaultdict, Counter
 import pysam
 
@@ -111,23 +110,20 @@ def compute_ping_pong(bam_path, window=30):
     return results
 
 
-# Command line interface
+# Get inputs/outputs from Snakemake
 # --------------------------------------------------
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Ping-pong signature analysis")
-    parser.add_argument("bam", help="Input BAM file of small RNA alignment to repeats")
-    parser.add_argument("--window", type=int, default=30, help="Distance window")
-    parser.add_argument(
-        "--out", default="pingpong.csv", help="Output CSV file (default: pingpong.csv)"
-    )
-    args = parser.parse_args()
+bam = snakemake.input["bam"]
+window = snakemake.params["window"]
+sample = snakemake.wildcards["sample"]
+out = snakemake.output["pingpong"]
 
-    res = compute_ping_pong(args.bam, window=args.window)
+# Run ping‑pong analysis
+res = compute_ping_pong(bam, window=window)
 
-    # Write CSV
-    with open(args.out, "w", newline="") as fh:
-        writer = csv.writer(fh)
-        writer.writerow(["repeat_id", "distance", "count"])
-        for te, counter in res.items():
-            for d, c in sorted(counter.items()):
-                writer.writerow([te, d, c])
+# Write CSV
+with open(out, "w", newline="") as fh:
+    writer = csv.writer(fh)
+    writer.writerow(["repeat_id", "distance", "count", "sample"])
+    for te, counter in res.items():
+        for d, c in sorted(counter.items()):
+            writer.writerow([te, d, c, sample])
