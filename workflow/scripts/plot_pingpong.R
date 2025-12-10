@@ -59,7 +59,7 @@ if (length(conditions) == 2) {
 }
 
 # Set factor levels for conditions
-reference_condition <- snakemake@config[["samples"]][["reference_condition"]]
+reference_condition <- snakemake@config[["reference_condition"]]
 other_conditions <- setdiff(conditions, reference_condition)
 new_levels <- c(reference_condition, other_conditions)
 df$condition <- factor(df$condition, levels = new_levels)
