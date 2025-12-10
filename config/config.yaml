@@ -1,13 +1,27 @@
 genome: mm39 # hg38 or mm39
 
+samples:
+  # condition
+  control_1: Control
+  control_2: Control
+  KO_1: KO
+  KO_2: KO
+  reference_condition: Control
+
 cutadapt:
   adapter: AGATCGGAAGA
-  extra: ""
-# TEsmall parameters
-#three_prime_adapter: AGATCGGAAGA # 3' adapter sequence for trimming
-#minlen: 16
-#maxlen: 36
-#maxaln: 100
-#threads: 8
-#mismatch: 0
-#extra_args: ""
+  extra: "-m 16 --trimmed-only -q 20"
+
+tesmall:
+  dbfolder: /mnt/4TB_SSD/TEsmall_db/
+  minlen: 16
+  maxlen: 36
+  maxaln: 100
+  mismatch: 0
+  extra_args: ""
+
+pingpong:
+  mismatch: 3
+  fasta: resources/L1mTf.fa
+  name: L1Md_Tf
+  window: 30
