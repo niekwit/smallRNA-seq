@@ -14,6 +14,8 @@ Where 'distance' is the 5' overlap distance between all combinations of sense an
 According to description in De Fazio et al. 2011 (Nature):
 For ping-pong analysis, only reads mapping to repeat elements were considered. For each pair of sense/antisense overlapping reads, the distance between their 5′ ends was recorded and counts were represented as relative frequencies within samples for each repeat element.
 
+The steps in this script, replicate the Perl scripts in:
+https://github.com/rberrens/SPOCD1-piRNA_directed_DNA_met/tree/master/piRNA_analysis
 
 Essence of the ping-pong analysis:
 
@@ -39,9 +41,6 @@ import pysam
 def load_reads(bam_path):
     bam = pysam.AlignmentFile(bam_path, "rb")
     for read in bam.fetch(until_eof=True):
-        # Only primary alignments
-        if read.is_secondary or read.is_supplementary:
-            continue
         # Yield will make one read available at a time,
         # rather than loading all reads into a list (generator)
         yield read
@@ -55,9 +54,7 @@ def read_count_from_header(read):
     """
     Extract the original count from the read name, e.g., 'seq1-12'
     """
-    name = read.query_name
-    m = name.split("-")[1]
-    return int(m)
+    return int(read.query_name.split("-")[1])
 
 
 # Main ping‑pong computation
@@ -77,7 +74,10 @@ def compute_ping_pong(bam_path, window=30):
         count = read_count_from_header(read)
 
         # Compute 5' end
-        five_p = read.reference_start if read_is_sense(read) else read.reference_end - 1
+        if read_is_sense(read):
+            five_p = read.reference_start
+        else:
+            five_p = read.reference_start + read.query_length
 
         if read_is_sense(read):
             te_list[te_id]["F"][five_p].append(count)
