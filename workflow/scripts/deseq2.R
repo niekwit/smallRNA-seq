@@ -86,6 +86,14 @@ res <- results(dds)
 # Save DESeq2 object for downstream analysis
 saveRDS(dds, file = snakemake@output[["rds"]])
 
+# Remove conditions from dds that are not in the current comparison
+# (in case multiple comparisons are being run)
+keep_samples <- rownames(colData(dds))[
+  colData(dds)$condition %in% c(reference_condition, test_condition)
+]
+dds <- dds[, keep_samples]
+dds$condition <- droplevels(dds$condition)
+
 # Get log2 fold changes and adjusted p-values
 res_df <- as.data.frame(res) %>%
   rownames_to_column(var = "uid") %>%
