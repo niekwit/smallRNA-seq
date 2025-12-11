@@ -1,3 +1,5 @@
+# Install TEsmall software from GitHub
+# --------------------------------------------------------
 rule install_te_small:
     output:
         directory("resources/te_small/"),
@@ -17,7 +19,8 @@ rule install_te_small:
         "cd {output}; "
         "python setup.py install"
 
-
+# Run TEsmall analysis
+# --------------------------------------------------------
 rule run_te_small:
     input:
         unpack(get_dependencies)
@@ -42,17 +45,32 @@ rule run_te_small:
     script:
         "../scripts/te_small.py"
 
-
+# Differential expression analysis with DESeq2
+# --------------------------------------------------------
 rule deseq2:
     input:
         txt=expand("results/te_small/{sample}/count_summary.txt", sample=SAMPLES),
     output:
-        plot="results/plots/{comparison}/volcano_plot.pdf",
+        pdf="results/plots/{comparison}/volcano_plot.pdf",
         csv="results/plots/{comparison}/results.csv",
-        pca="results/plots/{comparison}/pca_plot.pdf",
+        rds="results/deseq2/{comparison}/dds.rds"
     log:
-        "logs/te_small/deseq2.log"
+        "logs/te_small/deseq2_{comparison}.log"
     conda:
         "../envs/R.yaml"
     script:
         "../scripts/deseq2.R"
+
+# Plot PCA of DESeq2 results
+# --------------------------------------------------------
+rule plot_pca:
+    input:
+        rds=expand("results/deseq2/{comparison}/dds.rds", comparison=COMPARISONS[0]),
+    output:
+        pdf="results/plots/pca_plot.pdf",
+    log:
+        "logs/te_small/plot_pca.log"
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/plot_pca.R"
