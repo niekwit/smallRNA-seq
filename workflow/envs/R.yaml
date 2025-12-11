@@ -7,3 +7,4 @@ dependencies:
   - r-base=4.4
   - r-tidyverse=2.0.0
   - r-cowplot=1.2.0
+  - bioconda::bioconductor-deseq2=1.46.0
