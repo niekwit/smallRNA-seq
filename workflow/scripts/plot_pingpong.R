@@ -23,8 +23,7 @@ df <- data.frame(
 # Load each count file and rbind to df
 for (count_file in count_files) {
   sample <- basename(count_file) %>% str_replace(".csv$", "")
-  #condition <- snakemake@config$samples[[sample]]
-  condition <- str_extract(sample, "^[^_]+")
+  condition <- snakemake@config$samples[[sample]]
   temp_df <- read_delim(count_file) %>%
     group_by(repeat_id, sample) %>%
     mutate(
