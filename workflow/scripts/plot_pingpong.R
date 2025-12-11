@@ -17,16 +17,14 @@ df <- data.frame(
   sample = character(),
   condition = character(),
   total_reads_per_te = integer(),
-  fraction_of_te = double(),
-  avg_fraction_condition = double(),
-  sd_fraction_condition = double()
+  fraction_of_te = double()
 )
 
 # Load each count file and rbind to df
 for (count_file in count_files) {
   sample <- basename(count_file) %>% str_replace(".csv$", "")
-  condition <- snakemake@config$samples[[sample]]
-
+  #condition <- snakemake@config$samples[[sample]]
+  condition <- str_extract(sample, "^[^_]+")
   temp_df <- read_delim(count_file) %>%
     group_by(repeat_id, sample) %>%
     mutate(
@@ -34,21 +32,25 @@ for (count_file in count_files) {
       total_reads_per_te = sum(count),
       fraction_of_te = count / total_reads_per_te
     ) %>%
-    ungroup() %>%
-    # Calculate average fraction of all TEs per distance per sample
-    group_by(sample, distance) %>%
-    mutate(avg_fraction = mean(fraction_of_te)) %>%
-    ungroup() %>%
-    # Calculate average fraction of per distance per condition
-    group_by(condition, distance) %>%
-    mutate(
-      avg_fraction_condition = mean(fraction_of_te),
-      sd_fraction_condition = sd(fraction_of_te)
-    ) %>%
     ungroup()
-
   df <- bind_rows(df, temp_df)
 }
+
+# Create summary statistics per distance and condition
+df_summary <- df %>%
+  group_by(distance, condition) %>%
+  summarise(
+    fraction_per_condition = mean(fraction_of_te, na.rm = TRUE),
+    sd_fraction_condition = sd(fraction_of_te, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Add summary stats to main df
+df <- df %>%
+  left_join(
+    df_summary,
+    by = c("distance", "condition")
+  )
 
 # Prepare colours for plotting
 conditions <- unique(df$condition)
@@ -67,13 +69,13 @@ df$condition <- factor(df$condition, levels = new_levels)
 # Plot
 p <- ggplot(
   df,
-  aes(x = distance, y = avg_fraction_condition, color = condition)
+  aes(x = distance, y = fraction_per_condition, color = condition)
 ) +
   geom_line(aes(group = condition)) +
   geom_errorbar(
     aes(
-      ymin = avg_fraction_condition - sd_fraction_condition,
-      ymax = avg_fraction_condition + sd_fraction_condition
+      ymin = fraction_per_condition - sd_fraction_condition,
+      ymax = fraction_per_condition + sd_fraction_condition
     ),
     width = 0.4,
     color = "black",
