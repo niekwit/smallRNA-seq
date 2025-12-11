@@ -84,7 +84,7 @@ dds <- DESeq(dds)
 res <- results(dds)
 
 # Save DESeq2 object for downstream analysis
-saveRDS(dds, file = snakemake@output[["rds"]])
+save(dds, file = snakemake@output[["rds"]])
 
 # Remove conditions from dds that are not in the current comparison
 # (in case multiple comparisons are being run)
