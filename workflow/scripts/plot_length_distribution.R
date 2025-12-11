@@ -1,39 +1,44 @@
+# Redirect R output to log
+log <- file(snakemake@log[[1]], open = "wt")
+sink(log, type = "output")
+sink(log, type = "message")
+
+
 library(tidyverse)
 library(cowplot)
 
 # Get fasta files
-fasta_files <- snakemake@input[["fasta"]]
+count_files <- snakemake@input[["counts"]]
 
 # For each fasta extract length and counts
-length_distributions <- lapply(fasta_files, function(fasta_file) {
-  condition_name <- str_extract(basename(fasta_file), "^[^_]+")
-  sample_name <- str_replace(basename(fasta_file), "_counts.fasta$", "")
-  seqs <- read_lines(fasta_file)
-  headers <- seqs[seq(1, length(seqs), by = 2)]
+length_distributions <- lapply(count_files, function(count_file) {
+  sample_name <- str_replace(
+    basename(count_file),
+    "_length_distribution.txt$",
+    ""
+  )
 
-  # Split header with : as delimiter into 3 parts: sequence, length, count
-  split_headers <- str_split_fixed(headers, ":", 3)
+  condition_name <- str_extract(sample_name, "^[^_]+")
 
-  # Store lengths and counts in vectors
-  lengths <- as.integer(split_headers[, 2])
-  counts <- as.integer(split_headers[, 3])
-
-  # Create data frame with lengths and counts
-  tmp <- data.frame(
-    length = lengths,
-    count = counts,
-    sample = sample_name,
-    condition = condition_name,
-    stringsAsFactors = FALSE
+  read_delim(
+    count_file,
+    col_names = FALSE,
+    show_col_types = FALSE
   ) %>%
+    transmute(
+      sample = X3,
+      length = X2,
+      count = X1
+    ) %>%
     group_by(length) %>%
     mutate(count = sum(count)) %>%
     unique() %>%
     arrange(length) %>%
-    ungroup()
+    ungroup() %>%
+    mutate(condition = condition_name)
 })
 
-# Combine all data frames into one
+# Combine into single data frame and calculate frequencies and SD
 df <- bind_rows(length_distributions) %>%
   # Only keep lengths from 18 to 32
   filter(length >= 18 & length <= 32) %>%
@@ -48,7 +53,7 @@ df <- bind_rows(length_distributions) %>%
   group_by(condition, length) %>%
   mutate(
     condition_frequency = mean(sample_frequency),
-    sem = sd(sample_frequency) / sqrt(n())
+    sd = sd(sample_frequency)
   ) %>%
   ungroup()
 
@@ -57,7 +62,7 @@ p <- ggplot(df, aes(x = length, y = condition_frequency, color = condition)) +
   geom_line(aes(group = sample)) +
   geom_point() +
   geom_errorbar(
-    aes(ymin = condition_frequency - sem, ymax = condition_frequency + sem),
+    aes(ymin = condition_frequency - sd, ymax = condition_frequency + sd),
     width = 0.2,
     color = "black"
   ) +
@@ -76,7 +81,7 @@ p <- ggplot(df, aes(x = length, y = condition_frequency, color = condition)) +
 ggsave(filename = snakemake@output[["pdf"]], plot = p, width = 6, height = 4)
 
 # Save data as CSV
-# Only keep and save unique condition, length, condition_frequency, sem
+# Only keep and save unique condition, length, condition_frequency, sd
 df_output <- df %>%
   # Add columns with sums per condition and length, and total sum
   group_by(condition) %>%
@@ -93,7 +98,7 @@ df_output <- df %>%
     length_sum,
     condition_sum,
     condition_frequency,
-    sem
+    sd
   ) %>%
   unique() %>%
   arrange(condition, length)
