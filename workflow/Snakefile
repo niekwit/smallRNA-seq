@@ -11,12 +11,15 @@ configfile: "config/config.yaml"
 include: "rules/common.smk"
 
 
-#GENOME = config["genome"]
+GENOME = config["genome"]
 SAMPLES = samples()
+LEADER_SAMPLE = SAMPLES[0]
+EXT = ["1.ebwt", "2.ebwt", "3.ebwt", "4.ebwt", "rev.1.ebwt", "rev.2.ebwt"]
+COMPARISONS = comparisons(config)
 
-include: "rules/process_reads.smk"
-include: "rules/plotting.smk"
-#include: "rules/resources.smk"
+include: "rules/length_distribution.smk"
+include: "rules/te_small.smk"
+include: "rules/pingpong.smk"
 
 onstart:
     print("\n--- Analysis started ---\n")
@@ -30,10 +33,13 @@ onerror:
     print("\n--- An error occurred! ---\n")
 
 
-# target rules
+# Target rule
 # -----------------------------------------------------
 rule all:
     input:
-        #expand("results/fasta/{sample}_counts.fasta", sample=SAMPLES),
-        #"results/multiqc/multiqc_report.html",
-        "results/plots/length_distribution.pdf"
+        "results/plots/length_distribution.pdf",
+        "results/plots/pingpong.pdf",
+        "results/plots/pingpong.csv",
+        expand("results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS),
+        expand("results/plots/{comparison}/results.csv", comparison=COMPARISONS),
+        "results/plots/pca_plot.pdf",
