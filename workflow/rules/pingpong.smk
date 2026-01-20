@@ -95,3 +95,40 @@ rule plot_pingpong:
         "../envs/R.yaml"
     script:
         "../scripts/plot_pingpong.R"
+
+
+# Get piRNA sequences for 1U/10A bias analysis
+# ------------------------------------------------------------
+rule get_pirna_sequences:
+    input:
+        anno="results/te_small/{sample}/{sample}.anno",
+        fastq="results/te_small/{sample}/{sample}.rm_rRNA.fastq",
+    output:
+        pirna_reads=temp("results/seqs/{sample}_pirna_reads.txt"),
+        fastq=temp("results/seqs/{sample}_pirna.fastq"),
+        txt="results/seqs/{sample}_pirna.txt",
+    threads: 2
+    log:
+        "logs/pingpong/{sample}_get_pirna.log"
+    conda:
+        "../envs/pingpong.yaml"
+    script:
+        "../scripts/get_pirna_sequences.sh"
+
+
+# Plot 1U/10A bias  
+# ------------------------------------------------------------
+rule plot_sequence_bias_pirna:
+    input:
+        seqs=expand("results/seqs/{sample}_pirna.txt", sample=SAMPLES),
+    output:
+        logo="results/plots/pirna_sequence_bias_{comparison}_logo.pdf",
+        bar="results/plots/pirna_sequence_bias_{comparison}_bargraph.pdf",
+        bar_csv="results/plots/pirna_sequence_bias_{comparison}_bargraph.csv",
+    threads: 2
+    log:
+        "logs/pingpong/plot_sequence_bias_{comparison}.log"
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/sequence_bias_pirna.R"
