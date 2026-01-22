@@ -20,16 +20,16 @@ rule bowtie_index:
 # ------------------------------------------------------------
 rule collapse_sequences:
     input:
-        fastq="results/te_small/{sample}/{sample}.rm_rRNA.fastq",
+        fastq="results/trimmed/{sample}.fastq.gz",
     output:
-        fasta="results/te_small/{sample}/{sample}.rm_rRNA.collapsed.fasta",
+        fasta="results/fasta/{sample}.collapsed.fasta",
     threads: 2
     log:
         "logs/pingpong/{sample}_collapse.log"
     conda:
         "../envs/pingpong.yaml"
     shell:
-        "fastx_collapser -i {input.fastq} -o {output.fasta} {log}"
+        "zcat {input.fastq} | fastx_collapser -o {output.fasta} {log}"
 
 
 # Align collapsed sequences to bowtie1 index
@@ -38,7 +38,7 @@ rule collapse_sequences:
 # ------------------------------------------------------------
 rule align:
     input:
-        fasta="results/te_small/{sample}/{sample}.rm_rRNA.collapsed.fasta",
+        fasta="results/fasta/{sample}.collapsed.fasta",
         index=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT)
     output:
         bam="results/pingpong/{sample}.bam"
@@ -97,37 +97,18 @@ rule plot_pingpong:
         "../scripts/plot_pingpong.R"
 
 
-# Get piRNA sequences for 1U/10A bias analysis
-# ------------------------------------------------------------
-rule get_pirna_sequences:
-    input:
-        anno="results/te_small/{sample}/{sample}.anno",
-        fastq="results/te_small/{sample}/{sample}.rm_rRNA.fastq",
-    output:
-        pirna_reads=temp("results/seqs/{sample}_pirna_reads.txt"),
-        fastq=temp("results/seqs/{sample}_pirna.fastq"),
-        txt="results/seqs/{sample}_pirna.txt",
-    threads: 2
-    log:
-        "logs/pingpong/{sample}_get_pirna.log"
-    conda:
-        "../envs/pingpong.yaml"
-    script:
-        "../scripts/get_pirna_sequences.sh"
-
-
 # Plot 1U/10A bias  
 # ------------------------------------------------------------
 rule plot_sequence_bias_pirna:
     input:
-        seqs=expand("results/seqs/{sample}_pirna.txt", sample=SAMPLES),
+        bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
     output:
-        logo="results/plots/pirna_sequence_bias_{comparison}_logo.pdf",
-        bar="results/plots/pirna_sequence_bias_{comparison}_bargraph.pdf",
-        bar_csv="results/plots/pirna_sequence_bias_{comparison}_bargraph.csv",
+        logo="results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
+        bar="results/plots/pirna_sequence_bias/{te}/{comparison}_bargraph.pdf",
+        csv="results/plots/pirna_sequence_bias/{te}/{comparison}_frequencies.csv"
     threads: 2
     log:
-        "logs/pingpong/plot_sequence_bias_{comparison}.log"
+        "logs/pingpong/{te}_plot_sequence_bias_{comparison}.log"
     conda:
         "../envs/R.yaml"
     script:
