@@ -13,12 +13,19 @@ cutadapt:
   extra: "-m 16 --trimmed-only -q 20"
 
 tesmall:
+  run_tesmall: False
   dbfolder: /mnt/4TB_SSD/TEsmall_db/
   minlen: 16
   maxlen: 36
   maxaln: 100
   mismatch: 0
   extra_args: ""
+
+length_distribution:
+  apply_mirna_correction: TRUE
+  # miRNA length range for correction
+  mirna_min: 19
+  mirna_max: 25
 
 pingpong:
   mismatch: 3
