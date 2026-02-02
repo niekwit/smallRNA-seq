@@ -38,69 +38,102 @@ length_distributions <- lapply(count_files, function(count_file) {
     mutate(condition = condition_name)
 })
 
-# Combine into single data frame and calculate frequencies and SD
+# Combine into single data frame and filter for lengths 18-34
 df <- bind_rows(length_distributions) %>%
-  # Only keep lengths from 18 to 32
-  filter(length >= 18 & length <= 32) %>%
-  # Sum of counts per sample
-  group_by(sample) %>%
-  mutate(sample_sum = sum(count)) %>%
-  # Calculate frequency and SEM for each condition and length
-  group_by(length) %>%
-  mutate(sample_frequency = count / sample_sum) %>%
-  ungroup() %>%
-  # Calculate SEM per length across samples of the same condition
-  group_by(condition, length) %>%
-  mutate(
-    condition_frequency = mean(sample_frequency),
-    sd = sd(sample_frequency)
-  ) %>%
-  ungroup()
+  filter(length >= 18 & length <= 34)
+
+if (snakemake@config$length_distribution$apply_mirna_correction) {
+  # Apply miRNA-based normalization
+  print("Applying miRNA-based normalization")
+  # Based on:
+  # https://link.springer.com/article/10.15252/embj.201386855
+  mirna_min <- snakemake@config$length_distribution$mirna_min
+  mirna_max <- snakemake@config$length_distribution$mirna_max
+
+  df <- df %>%
+    group_by(sample) %>%
+    mutate(
+      mirna_sum = sum(count[length >= mirna_min & length <= mirna_max])
+    ) %>%
+    # Normalize every length's count by the miRNA sum of that sample
+    mutate(
+      mi_norm_frequency = count / mirna_sum
+    ) %>%
+    # Calculate mean and SD based on miRNA-normalized values
+    group_by(condition, length) %>%
+    mutate(
+      mi_norm_condition_avg = mean(mi_norm_frequency),
+      mi_norm_sd = sd(mi_norm_frequency)
+    ) %>%
+    ungroup()
+
+  # Set plotting and output columns
+  y_value <- "mi_norm_condition_avg"
+  y_sd <- "mi_norm_sd"
+  y_label <- "Fraction (miRNA-Normalized)"
+} else {
+  print("No miRNA-based normalization applied")
+  df <- df %>%
+    # Sum of counts per sample
+    group_by(sample) %>%
+    mutate(sample_sum = sum(count)) %>%
+    # Calculate frequency and SD for each condition and length
+    group_by(length) %>%
+    mutate(sample_frequency = count / sample_sum) %>%
+    ungroup() %>%
+    # Calculate SD per length across samples of the same condition
+    group_by(condition, length) %>%
+    mutate(
+      condition_frequency = mean(sample_frequency),
+      sd = sd(sample_frequency)
+    ) %>%
+    ungroup()
+
+  # Set plotting and output columns
+  y_value <- "condition_frequency"
+  y_sd <- "sd"
+  y_label <- "Fraction (Total Count Normalized)"
+}
 
 # Create line plot with error bars
-p <- ggplot(df, aes(x = length, y = condition_frequency, color = condition)) +
+p <- ggplot(df, aes(x = length, y = .data[[y_value]], color = condition)) +
   geom_line(aes(group = sample)) +
   geom_point() +
   geom_errorbar(
-    aes(ymin = condition_frequency - sd, ymax = condition_frequency + sd),
+    aes(
+      ymin = .data[[y_value]] - .data[[y_sd]],
+      ymax = .data[[y_value]] + .data[[y_sd]]
+    ),
     width = 0.2,
     color = "black"
   ) +
   labs(
     x = "Length (nt)",
-    y = "Frequency"
+    y = y_label
   ) +
   theme_cowplot() +
   theme(legend.position = "bottom") +
   scale_x_continuous(
-    breaks = seq(18, 32, by = 2),
+    breaks = seq(18, 34, by = 2),
     guide = guide_axis(minor.ticks = TRUE)
   )
 
 # Save plot
 ggsave(filename = snakemake@output[["pdf"]], plot = p, width = 6, height = 4)
 
-# Save data as CSV
-# Only keep and save unique condition, length, condition_frequency, sd
+# Select relevant columns for the final CSV
 df_output <- df %>%
-  # Add columns with sums per condition and length, and total sum
-  group_by(condition) %>%
-  mutate(
-    condition_sum = sum(count)
-  ) %>%
-  group_by(length) %>%
-  mutate(
-    length_sum = sum(count)
-  ) %>%
   select(
     condition,
     length,
-    length_sum,
-    condition_sum,
-    condition_frequency,
-    sd
+    any_of(c(
+      "condition_frequency",
+      "sd",
+      "mi_norm_condition_avg",
+      "mi_norm_sd"
+    ))
   ) %>%
-  unique() %>%
+  distinct() %>%
   arrange(condition, length)
 
 # Save to CSV
