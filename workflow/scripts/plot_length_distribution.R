@@ -18,15 +18,14 @@ length_distributions <- lapply(count_files, function(count_file) {
     ""
   )
 
-  condition_name <- str_extract(sample_name, "^[^_]+")
-
+  condition_name <- snakemake@config$samples[[sample_name]]
   read_delim(
     count_file,
     col_names = FALSE,
     show_col_types = FALSE
   ) %>%
     transmute(
-      sample = X3,
+      sample = sample_name,
       length = X2,
       count = X1
     ) %>%
@@ -95,6 +94,18 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
   y_label <- "Fraction (Total Count Normalized)"
 }
 
+# Set colour palette
+conditions <- unique(df$condition)
+reference_condition <- snakemake@config$reference_condition
+other_conditions <- setdiff(conditions, reference_condition)
+new_levels <- c(reference_condition, other_conditions)
+df$condition <- factor(df$condition, levels = new_levels)
+if (length(conditions) == 2) {
+  colours <- c("#cccccc", "#dd3b3b")
+} else {
+  colours <- RColorBrewer::brewer.pal(n = length(conditions), name = "Set3")
+}
+
 # Create line plot with error bars
 p <- ggplot(df, aes(x = length, y = .data[[y_value]], color = condition)) +
   geom_line(aes(group = sample)) +
@@ -116,7 +127,8 @@ p <- ggplot(df, aes(x = length, y = .data[[y_value]], color = condition)) +
   scale_x_continuous(
     breaks = seq(18, 34, by = 2),
     guide = guide_axis(minor.ticks = TRUE)
-  )
+  ) +
+  scale_color_manual(values = colours)
 
 # Save plot
 ggsave(filename = snakemake@output[["pdf"]], plot = p, width = 6, height = 4)
