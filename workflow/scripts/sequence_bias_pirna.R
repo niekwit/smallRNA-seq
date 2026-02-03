@@ -59,6 +59,17 @@ for (condition in c(reference_condition, test_condition)) {
     # Convert T to U for RNA representation
     seqs <- str_replace_all(seqs, "T", "U")
 
+    # Get the names of all sequences
+    # As sequences were collapsed in the BAM, we need to replicate
+    # each sequence according to its count
+    seq_names <- data$qname[which(names(seqs) == te)]
+
+    # Sequence names are in the format: seqname-count
+    counts <- as.integer(str_split_fixed(seq_names, "-", 2)[, 2])
+
+    # Replicate sequences according to their counts
+    seqs <- rep(seqs, times = counts)
+
     all_seqs <- c(all_seqs, seqs)
   }
   sequence_lists[[condition]] <- all_seqs
@@ -145,7 +156,7 @@ p_bar <- ggplot(freq_df, aes(x = Condition, y = Frequency, fill = Nucleotide)) +
   ) +
   labs(
     x = NULL,
-    y = "Frequency at first nucleotide",
+    y = "Nucleotide frequency",
     title = paste0("Nucleotide frequency at\npositions 1 and 10 for ", te)
   ) +
   theme_cowplot(16) +
