@@ -11,6 +11,9 @@ import pandas as pd
 def samples():
 
     fastq = glob.glob("reads/*/*.fastq.gz")
+
+    assert len(fastq) > 0, "No FASTQ files found in reads/ directory!"
+
     return [os.path.basename(f).split(".")[0] for f in fastq]
 
 
@@ -48,3 +51,18 @@ def comparisons(config):
     other_conditions = list(set(other_conditions))
 
     return [f"{cond}_vs_{reference_condition}" for cond in other_conditions]
+
+
+def te(config):
+
+    fasta_file = config["pingpong"]["fasta"]
+
+    # Cleaned up fasta headers are wildcard values
+    te_list = []
+    with open(fasta_file, "r") as fh:
+        for line in fh:
+            if line.startswith(">"):
+                te_name = line[1:].strip().split()[0]
+                te_list.append(te_name)
+
+    return te_list
