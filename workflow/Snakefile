@@ -1,6 +1,7 @@
 # Based on:
 # https://github.com/rberrens/SPOCD1-piRNA_directed_DNA_met/tree/master/piRNA_analysis
 
+
 # load configuration
 # -----------------------------------------------------
 configfile: "config/config.yaml"
@@ -16,10 +17,13 @@ SAMPLES = samples()
 LEADER_SAMPLE = SAMPLES[0]
 EXT = ["1.ebwt", "2.ebwt", "3.ebwt", "4.ebwt", "rev.1.ebwt", "rev.2.ebwt"]
 COMPARISONS = comparisons(config)
+TE = te(config)
+
 
 include: "rules/length_distribution.smk"
 include: "rules/te_small.smk"
 include: "rules/pingpong.smk"
+
 
 onstart:
     print("\n--- Analysis started ---\n")
@@ -35,11 +39,34 @@ onerror:
 
 # Target rule
 # -----------------------------------------------------
+TARGETS = [
+    "results/plots/length_distribution.pdf",
+    "results/plots/pingpong.pdf",
+    "results/plots/pingpong.csv",
+    expand(
+        "results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
+        te=TE,
+        comparison=COMPARISONS,
+    ),
+    expand(
+        "results/plots/pirna_sequence_bias/{te}/{comparison}_bargraph.pdf",
+        te=TE,
+        comparison=COMPARISONS,
+    ),
+]
+
+if config["tesmall"]["run_tesmall"]:
+    TARGETS.extend(
+        [
+            "results/plots/pca_plot.pdf",
+            expand(
+                "results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS
+            ),
+            expand("results/plots/{comparison}/results.csv", comparison=COMPARISONS),
+        ]
+    )
+
+
 rule all:
     input:
-        "results/plots/length_distribution.pdf",
-        "results/plots/pingpong.pdf",
-        "results/plots/pingpong.csv",
-        expand("results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS),
-        expand("results/plots/{comparison}/results.csv", comparison=COMPARISONS),
-        "results/plots/pca_plot.pdf",
+        TARGETS,
