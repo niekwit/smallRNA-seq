@@ -53,7 +53,7 @@ rule length_counts:
 # -----------------------------------------------------
 rule plot_length_distribution:
     input:
-        counts=expand("results/length_distribution/{sample}_length_distribution.txt", sample=SAMPLES),
+        unpack(plot_length_distribution_input)
     output:
         pdf="results/plots/length_distribution.pdf",
         csv="results/plots/length_distribution.csv",
