@@ -4,6 +4,7 @@
 [![Tests](https://github.com/niekwit/smallRNA-seq/actions/workflows/main.yaml/badge.svg)](https://github.com/niekwit/smallRNA-seq/actions/workflows/main.yaml)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![workflow catalog](https://img.shields.io/badge/Snakemake%20workflow%20catalog-darkgreen)](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/niekwit/smallRNA-seq)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19258359.svg)](https://doi.org/10.5281/zenodo.19258359)
 
 A Snakemake workflow for `smallRNA-seq`
 
@@ -538,6 +539,12 @@ results/
     ├── WT_1_qc.txt
     └── WT_2_qc.txt
 ```
+
+## Citation
+
+If you find this workflow useful, please consider citing it:
+
+> Niek Wit. (2026). niekwit/smallRNA-seq: v0.1 (v0.1). Zenodo. https://doi.org/10.5281/zenodo.19258359
 
 ## References
 
