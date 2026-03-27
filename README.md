@@ -1,71 +1,543 @@
-# Snakemake workflow: `<name>`
+# Snakemake workflow: `smallRNA-seq`
 
-[![Snakemake](https://img.shields.io/badge/snakemake-≥8.0.0-brightgreen.svg)](https://snakemake.github.io)
-[![GitHub actions status](https://github.com/<owner>/<repo>/workflows/Tests/badge.svg?branch=main)](https://github.com/<owner>/<repo>/actions?query=branch%3Amain+workflow%3ATests)
+[![Snakemake](https://img.shields.io/badge/snakemake-≥8.25.5-brightgreen.svg)](https://snakemake.github.io)
+[![GitHub actions status](https://github.com/niekwit/smallRNA-seq/workflows/Tests/badge.svg?branch=main)](https://github.com/niekwit/smallRNA-seq/actions?query=branch%3Amain+workflow%3ATests)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
-[![workflow catalog](https://img.shields.io/badge/Snakemake%20workflow%20catalog-darkgreen)](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/<owner>/<repo>)
+[![workflow catalog](https://img.shields.io/badge/Snakemake%20workflow%20catalog-darkgreen)](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/niekwit/smallRNA-seq)
 
-A Snakemake workflow for `<description>`
-
-- [Snakemake workflow: `<name>`](#snakemake-workflow-name)
-  - [Usage](#usage)
-  - [Deployment options](#deployment-options)
-  - [Authors](#authors)
-  - [References](#references)
-  - [TODO](#todo)
+A Snakemake workflow for `smallRNA-seq`
 
 ## Usage
 
-The usage of this workflow is described in the [Snakemake Workflow Catalog](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/<owner>/<repo>).
+Prepare your analysis directory as follows:
 
-Detailed information about input data and workflow configuration can also be found in the [`config/README.md`](config/README.md).
+```shell
+.
+├── config
+│   ├── config.yaml
+│   ├── README.md
+│   └── schemas
+│       ├── config.schema.yaml
+│       └── samples.schema.yaml
+├── reads
+│   ├── KO_1
+│   │   └── KO_1.fastq.gz
+│   ├── KO_2
+│   │   └── KO_2.fastq.gz
+│   ├── WT_1
+│   │   └── WT_1.fastq.gz
+│   └── WT_2
+│       └── WT_2.fastq.gz
+├── resources
+│   └── TE.fa
+└── workflow
+    ├── envs
+    │   ├── pingpong.yaml
+    │   ├── process_reads.yaml
+    │   ├── R.yaml
+    │   └── te_small.yaml
+    ├── rules
+    │   ├── common.smk
+    │   ├── length_distribution.smk
+    │   ├── mirna_correction.smk
+    │   ├── pingpong.smk
+    │   └── te_small.smk
+    ├── scripts
+    │   ├── deseq2.R
+    │   ├── pingpong.py
+    │   ├── plot_length_distribution.R
+    │   ├── plot_pca.R
+    │   ├── plot_pingpong.R
+    │   ├── sequence_bias_pirna.R
+    │   └── te_small.py
+    └── Snakefile
 
-If you use this workflow in a paper, don't forget to give credits to the authors by citing the URL of this repository or its DOI.
-
-## Deployment options
-
-To run the workflow from command line, change the working directory.
-
-```bash
-cd path/to/snakemake-workflow-name
+12 directories, 26 files
 ```
 
-Adjust options in the default config file `config/config.yaml`.
-Before running the complete workflow, you can perform a dry run using:
+The workflow and config directories can be copied from this repository.
 
-```bash
-snakemake --dry-run
+The analysis settings are defined in `config/config.yaml`:
+
+```yaml
+genome: mm39 # hg38 or mm39
+
+samples:
+  # sample: condition
+  control_1: Control
+  control_2: Control
+  KO_1: KO
+  KO_2: KO
+reference_condition: Control
+
+cutadapt:
+  adapter: AGATCGGAAGAGCACACGTCT
+  extra: "-m 16 --trimmed-only -q 20"
+
+tesmall:
+  run_tesmall: False
+  dbfolder: /path/to/te_small_db
+  minlen: 16
+  maxlen: 36
+  maxaln: 100
+  mismatch: 0
+  extra_args: ""
+
+length_distribution:
+  apply_mirna_correction: TRUE
+  mirna_correction_method: length # length or align
+
+  # miRNA length range for correction
+  # (for mirna_correction_method = length)
+  mirna_min: 19
+  mirna_max: 25
+
+pingpong:
+  mismatch: 3
+  fasta: resources/L1mTf.fa
+  window: 30
 ```
 
-To run the workflow with test files using **conda**:
+The FASTA file under config[pingpong][fasta] should contain the TE sequences of interest for ping-pong analysis. Example contents:
 
-```bash
-snakemake --cores 2 --sdm conda --directory .test
+<details>
+  <summary>Example TE fasta file</summary>
+
+  ```fasta
+>L1MdTf_III	L1	Mus musculus
+agcagcagcggtcgccatctkggttccgggactccgcgggacctaggaaattagtctgaa
+caggttagagggtgcgccagagaaccggacagcttctgggacgggcggaagcacagagcc
+gctgaggcagcacccttggcgggccgcagacagccggccaccatccggaccagaggacag
+gtgtccgcctggcttgggaggcggcctcagcctcagcagcagcggtcgccatctkggttc
+cgggactcmgcrgracytaggaaattagtctgaacaggttagagggtgcgccagagaacc
+ggacagcttctgggacgggcagaagcacagagccgctgaggcagcascctkggcgggccg
+cagacarccggccaccatccggaccagaggacaggtgtccgcctggcttgggaggcggcc
+tcagcctcagcagcagcggtcgccatctkggttccgggactccgcggracytaggaaatt
+agtctgaacaggttagagggtgcgccagagaaccggacagcttctgggacgggcagaagc
+acagagccgctgaggcagcacccttggcgggccgcagacagccggccaccgtccggacca
+gaggacaggtgtccgcctggctcgggaggcggcctcagcctcaggagcagcggtcrccat
+cttggttccaggactccctggaacttaggawtttagtctgcacaggtgagagtctgcacc
+acagaagctgacagcttctgggaactgccaaagcaacacagcttctgagagaggccctgt
+tttgggccttcttcttcgaccaggaggaggtccaaaaacaagatatctgcgcaccttccc
+tgtaagagagcttgccagcagagagtgctctgagcactgaaactcagaggagagaatctg
+tctcccaggtctgctgagagacggtaacagaatcaccagaagaacaatctctaaacagag
+tcaactataactactaactccagagattaccagatggcgaaaggtaaacgtaggaatcct
+actaacaggaaccaagaccactcaccatcatcagaacccagcactcccacttcgcccagt
+ccagggcaccccaacacacccgaaaacctagacctagatttaaaagcatatctcatgatg
+atggtagaggacatcaagaaggactttaataaatcacttaaagaaatacaggagaacact
+gctaaagagttacaagtccttaaagaaaaacaggaaaacacaatcaaacaggtagaagtc
+cttacagaaaaagaggaaaaaacatacaaacaggtgatggaaatgaacaaaaccatacta
+gacctaaaaagggaagtagaaacaataaagaaaactcaaagtgaggcaacactggagata
+gaaaccctaggaaagaaatctggaaccatagatttgagcatcagcaacagaatacaagag
+atggaagagagaatctcaggtgcagaagattccatagagaacatcggcacaacaatcaaa
+gaaaatggaaaatgcaaaaagatcctaactcaaaatatccaggaaatccaggacacaatg
+agaagaccaaacctacggataataggagtggatgagaatgaagattttcaactcaaagga
+ccagcaaacatcttcaacaaaattattgaagaaaacttcccaaatataaagaaagagata
+cctatgaacatacaagaagcctacagaactccaaatagactggaccagaaaagaaattcc
+tcccgacacataataatcagaacaacaaatgcactaaataaagatagaatactaaaagca
+gtaagggaaaaaggtcaagtaacatacaaaggcaagcctatcagaattacaccagatttt
+tcaccagagactatgaaagccagaagagcctggacagatgttatacagacactaagagaa
+cacaaattccagcccaggctactatacccagccaaactctcaattaccatagatggagaa
+accaaagtattccacgacaaaaccaaattcacacattatctctccacgaatccagccctt
+caaaggttaataacagaaaaaaaccaatacaagaacgggaacaatgccctagaaaaaaca
+agaaggtaatccctcaacaaacctaaaagaagacagccacaagaacagaatgccaacttt
+aacaacaaaaataacaggaagcaacaattacttttccttaatatctcttaacatcaatgg
+tctcaactccccaataaaaagacatagactaacaaactggctacacaaacaagacccaac
+attttgctgtttacaggagacacatctcagagaaaaagatagacactacctcagaataaa
+aggctggaaaacaattttccaagcaaatggtatgaagaaacaagctggagtagccatcct
+aatatctgataagattgacttccaacccaaagtcatcaaaaaagacaaggaggggcactt
+ygttctcatcaaaggtaaaatcctccaagaggaactctcaattctgaatatctatgctcc
+aaatacaagggcagccacattcattaaagaaactttagtaaagctcaaagcacacattgc
+acctcacacaataatagtgggagacttcaacacaccactttcaccaatggacagatcatg
+gaaacagaaactaaacagggacacactgaaactaacagaagtgatgaaacaaatggatct
+gacagatatctacagaacattttatcctaaaacaaaaggatataccttcttctcagcacc
+tcatggtaccttctccaaaattgaccacataataggtcacaaaacaggcctcaacagatt
+caaaaatattgaaattgtcccatgtatcctatcagatcaccatgcactaaggctgatctt
+caataacaaaaaaaataacagaaagccaacactcacgtggaaactgaacaacactcttct
+caatgataccttggtcaaggaaggaataaagaaagaaattaaagactttttagagtttaa
+tgaaaatgaagccacaacgtacccaaacctttgggacacaatgaaagcatttctaagagg
+gaaactcatagctctgagtgcctccatgaagaaacgggagagagcacatactagcagctt
+gacaacacatctaaaagctctagaaaaaaaggaagcaaattcacccaagaggagtagacg
+gcaggaaataatcaaactcaggggtgaaatcaaccaagtggaaacaagaagaactattca
+aagaattaaccaaacgaggagttggttctttgagaaaatcaacaagatagataaaccctt
+agctagactcactagagggcacagagacaaaatcctaattaacaaaatcagaactgaaaa
+gggagacataacaacagatcctgaagaaatccaaaacaccatcagatccttctacaaaag
+gctatactcaacaaaactggaaaacctggacgaaatggacaaatttctggacagatacca
+ggtaccaaagttgaatcaggatcaagttgaccttctaaacagtcccatatcccctaaaga
+aatagaagcagttataaatagtctcccagccaaaaaaagcccaggaccagacgggtttag
+tgcagagttctatcagaccttcaaagaagatctaattccagttctgcacaaactttttca
+caagatagaagtagaaagtactctacccaactcattttatgaagccactattactctgat
+acctaaaccacagaaagatccaacaaagatagagaacttcagaccaatttctcttatgaa
+tatcgatgcaaaaatcctcaataaaattctcgctaaccgaatccaagaacacattaaagc
+aatcatccatcctgaccaagtaggttttattccaggratgcagggatggtttaatatacg
+aaaatccatcaatgtaatccactatataaacaaactcaaagacaaaaaccacatgatcat
+ctcgttrgatgcagaaaaagcatttgacaagatccaacacccattcatgataaaagttct
+ggaaagatcaggaattcaaggcccatacctaaacatgataaaagcaatctacagcaaacc
+agtagccaacatcaaagtaaatggagagaagctggaagcaatcccactaaaatcagggac
+tagacaaggctgcccactttctccctaccttttcaacatagtacttgaagtattagccag
+agcaattcgacaacaaaaggagatcaaggggatacaaattggaaaggaggaagtcaaaat
+atcactttttgcagatgatatgatagtatatataagtgaccctaaaaattccaccagaga
+actcctaaacctgataaacagcttcggtgaagtagctggatataaaattaactcaaacaa
+gtcaatggcctttctctacacaaagaataaacaggctgagaaagaaattagggaaacaac
+acccttctcaatagtcacaaataatataaaatatctcggcgtgactctaactaaggaagt
+gaaagatctgtatgataaaaacttcaagtctctgaagaaagaaattaaagaagatctcag
+aagatggaaagatctcccatgctcatggattggcaggatcaayattgtaaaaatggctat
+cttgccaaaagcaatctacagattcaatgcaatccccatcaaaattccaactcaattctt
+caacgaattagaaggagcaatttgcaaattcatctggaataacaaaaaacctaggatagc
+aaaaactcttctcaaggataaaagaacctctggtggaatcaccatgcctgacctaaagct
+ttactacagagcaattgtggtaaaaactgcatggtactggtatagagacagacaagtaga
+ccaatggaatagaattgaagacccagaaatgaacccacacacctatggtcacttgatctt
+cgacaagggagctaaaaccatccagtggaagaaagacagcattttcaacaaatggtgctg
+gcacaactggttgttatcatgtagaagaatgcgaatcgatccatacttatctccttgtac
+taaggtcaaatctaaatggatcaaagaacttcacataaaaccagagacactgaaacttat
+agaggagaaagtggggaaaagccttgaagatatgggcacaggggaaaaattcctgaacag
+aacagcaatggcttgtgctgtaagatcgagaattgacaaatgggacctaatgaaactcca
+aagtttctgcaaggcaaaagacaccgtcaataagacaaagagaccaccaacagattggga
+aaggatctttacctatcctaaatcagataggggactaatatccaacatatataaagaact
+caagaaggtggacttcagaaaatcaaayaaccccattaaaaaatggggctcagaactgaa
+caaagaattctcacctgaggaataccgaatggcagagaagcacctgaaaaaatgttcaac
+atccttaatcatcagggaaatgcaaatcaaaacaaccctgagattccacctcacaccagt
+cagaatgtctaagatcaaaaattcaggtgacagcagatgctggcgaggatgtggagaaag
+aggaacactcctccattgttggtgggattgcaggcttgtacaaccactctggaaatccgt
+ctggcggttcctcagaaaattggacatagtactaccggaggatccagcaatacctctcct
+gggcatatatccagaagatgccccaactggtaagaaggacacatgctccactatgttcat
+agcagccttatttataatagccagaagctggaaagaacccagatgcccctcaacagagga
+atggatacagaaaatgtggtacatctacacaatggagtactactcagctattaaaaagaa
+tgaatttatgaaattcctagccaaatggatggacctggagggcatcatcctgagtgaggt
+aacacattcacaaaggaactcacacaatatgtactcactgataagtggatattagcccaa
+aacctaggatacccaagatataagatacaatttcctaaacacatgaaactcaagaaaaat
+gaagactgaagtgtggacactatgcccctccttagaagtgggaacaaaacacccttggaa
+ggagttacagagacaaagtttggagctgagatgaaaggatggaccatgtagagactgcct
+tatccagggatccaccccataatcagcatccaaacgctgacaccattgcatacactagca
+agattttatcgaaaggacccagatgtagctgtctcttgtgagactatgccggggcctagc
+aaacacagaagtggatgcccacagtcagctaatggatggatcacagggctcccaatggag
+gagctagagaaagtacccaaggagctaaagggatctgcaaccctataggtggatcaacat
+tatgaactaaccagtaccccggagctcttgactctagctgcatatgtatcaaaagatggc
+ctagtcggccatcactggaaagagaggcccattggacacacaaactttatatgccccaga
+acaggggaacgccagggccaaaaagggggagtgggcgggtaggggagtgggggtgggtgg
+gtatgggggacttttggtatagcattggaaatgtaaatgagctaaatacctaataaaaaa
+tggaaagaaa
+>L1MdTf_I	L1	Mus musculus
+caggcggaagcgcggaggcgctgaggcagcaccctgcgtgggccggggacagccggccac
+cttccggaccagaggacaggtgcccgcccggctggggaggcgrcctaagccacagcagca
+gcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggtgaga
+gggtgcgccagagaacctgacagcytctggaacaggcggaagcacagaggcgctgaggca
+gcaccctgtgtgggccggggacagccggccaccttccggaccrgaggacaggtgcccrcc
+cggctggggaggcggcctaagccacagcagcagcggtcgccatcttggtccgggacccgc
+cgaacttaggaaattagtctgaacaggtgagagggtgcgccagagaacctgacagcttct
+ggaacaggcggaagcacagaggcgctgaggcagcaccctgtgtgggccggggacagccgg
+ccaccttccggaccrgaggacaggtgcccrcccggctggggaggcggcctaagccacagc
+agcagcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggt
+gagagggtgcgccagagaacctgacagcttctggaacaggcrgaagcacagaggcgctga
+ggcagcaccctgtgtgggccggggacagccggccaccttccggaccrgaggacaggtgcc
+cgcccggctggggaggcggcctaagccacagcagcagcggtcgccatcttggtccgggac
+ccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccagagaacctgacagc
+ytctggaacaggcagaagcacagaggsgctgaggcagcaccctgtgtgggccggggacag
+ccggccaccttccggaccggaggacaggtgcccgcccggctggggaggcgacctaagcca
+cagcagcagcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaac
+aggtgagagggtgcgccagagaacctgacagcttctggaacaggcggaagcacagaggcg
+ctgaggcagcaccctgygtgggccggggacagccggccaccttccggaccagaggacagg
+tgcccrcccggctggggaggcggcctaagccacagcagcagcggtcgccatcttggtccg
+ggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccagagaacctga
+cagcttctggaacaggcagaagcacagaggcgctgaggcagcaccctgtgtgggccgggg
+acagccggccaccttccggaccagaggacaggtgcccgcccggctggggaggcgacctaa
+gccacagcagcagcggtcgccatcttggtcccgggactccaaggaacttaggaatttagt
+ctgcttaggtgagagtctgtaccacctgggaactgccaaagcaacacagtgtctgagaaa
+ggtcctgttttgggccttcttcttcggccaggaggaggtccaaatacaagatatctgcgc
+accttccctgtaagagagcttgccagcagagagtgctctgagcactgaaactcagaggag
+agaatctgtctcccaggtctgctgatagacggtaacagaatcaccagaagaacaatctct
+aaacagagtcaactataactactaactccagagattaccagatggcgaaaggtaaacgga
+ggaatcttactaacaggaaccaagaccactcaccatcaccagaacccagcacacccactt
+cgcccagtccagggaaccccaacacacctgagaacctagacctagatttaaaagcatatc
+tcatgatgatggtagaggacatcaagaaggactttaataaatcacttaaagaaatacagg
+agaacactgctaaagagttacaagtccttaaagaaaaacaggaaaacacaatcaaacagg
+tagaagtccttacagaaaaagaggaaaaaacatacaaacaggtgatggaaatgaacaaaa
+ccatactagacctaaaaagggaagtagacacaataaagaaaactcaaagcgaggcaacac
+tagagatagaaaccctaggaaagaaatctggaaccatagatttgagcatcagcaacagaa
+tacaagagatggaagagagaatctcaggtgcagaagattccatagagaacatcggcacaa
+caatcaaagaaaatggaaaatgcaaaaagatcctaactcaaaatatccaggaaatccagg
+acacaataagaagaccaaacgtacggataataggagtggatgagaatgaagattttcaac
+tcaaaggtccagcaaacatcttcaacaaaattattgaagaaaacttcccaaatctaaaga
+atgagatgcatatgaacatacaagaagcctacagaactccaaatagactggaccagaaaa
+gaaattcctcccgacacataataatcagaacatcaaatgcactaaataaagatagaatac
+taaaagcagtaagggaaaaaggtcaagtaacatataaaggcaagcctatcagaattacac
+cagatttttcaccagagactatgaaagccagaagagcctggacagatgttatacagacac
+taagagaacacaaactgcagcccaggctactatacccagccaaactctcaattatcatag
+agggagaaaccaaagtattccacgacaaaaccaaattcacgcattatctctccacgaatc
+cagcccttcaaaggataataacagaaaaaaaccaatacaagaacgggaacaacgccctag
+aaaaaacaagaaggtaatccctcaacaaacctaaaagaagacagccacaagaacagaatg
+ccacctttaacaactaaaataacaggaagcaacaattacttttccttaatatctcttaac
+atcaatggtctcaactcgccaataaaaagacatagactaacaaactggctacacaaacaa
+gacccaacattttgctgcttacaggaaactcatctcagagaaaaagatagacactacctc
+agaatgaaaggctggaaaacaattttccaagcaaatggtatgaagaaacaagcaggagta
+gccatcctaatatctgataagattgacttccaacccaaagtcatcaaaaaagacaaggag
+ggacacttcattctcatcaaaggtaaaatcctccaagaggaactctcaattctgaatatc
+tatgctccaaatacaagagcagccacattcactaaagaaactttagtaaagctcaaagca
+cacattgcgcctcacacaataatagtgggagacttcaacacaccactttcaccaatggac
+agatcatggaaacagaaactaaacagggacacactgaaactaacagaagtgatgaaacaa
+atggatctgacagatatctacagaacattttwccctaaaacaaaaggatataccttcttc
+tcagcacctcatggtaccttctccaaaattgaccacataataggtcacaaatcaggcctc
+aacagattcaaaaatattgaaattgtcccatgtatcctatcagatcaccatgcactaagg
+ctgatcttcaataacaaaataaataacagaaagccaacattcacatggaaactgaacaac
+actcttctcaatgataccttggtcaaggaaggaataaagaaagaaattaaagacttttta
+gagtttaatgaaaatgaagccacaacgtacccaaacctttgggacacaatgaaagcattt
+ctaagagggaaactcatagctatgagtgccttcaagaaaaaacgggagagagcacatact
+agcagcttgacaacacatctaaaagctctagaaaaaaaggaagcaaattcacccaagagg
+agtagacggcaggaaataatcaaactcaggggtgaaatcaaccaagtggaaacaagaaga
+actattcaaagaattaaccaaacgaggagttggttctttgagaaaatcaacaagatagat
+aaacccttagctagactcactaaagggcacagggacaaaatcctaattaacaaaatcaga
+aatgaaaagggagacataacaacagatcctgaagaaatccaaaacaccatcagatccttc
+tacaaaaggctatactcaacaaaactggaaaacctggacgaaatggacaaatttctggac
+agataccaggtaccaaagttgaatcaggatcaagttgaccttctaaacagtcccatatcc
+cctaaagaaatagaagcagttattaatagtctcccagccaaaaaaagcccaggaccagac
+gggtttagtgcagagttctatcagaccttcaaagaagatctaactccagttctgcacaaa
+ctttttcacaagatagaagtagaaggtattctacccaactcattttatgaagccactatt
+actctgatacctaaaccacagaaagatccaacaaagatagagaacttcagaccaatttct
+cttatgaacatcgatgcaaaaatccttaataaaattctcgctaaccgaatccaagaacac
+attaaagcaatcatccatcctgaccaagtaggttttattccagggatgcagggatggttt
+aatatacgaaaatccatcaatgtaatccattatataaacaaactcaaagacaaaaaccac
+atgatcatctcgttagatgcagaaaaagcatttgacaagatccaacacccattcatgata
+aaagttctggaaagatcaggaattcaaggccaatacctaaacatgataaaagcaatctac
+agcaaaccagtagccaacatcaaagtaaatggagagaagctggaagcaatcccactaaaa
+tcagggactagacaaggctgcccactttctccctaccttttcaacatagtacttgaagta
+ttagccagagcaattcgacaacaaaaggagatcaaggggatacaaattggaaaagaggaa
+gtcaaaatatcactttttgcagatgatatgatagtatatataagtgaccctaaaaattcc
+aacagagaactcctaaacctgataaacagcttcggtgaagtagctggatataaaattaac
+tcaaacaagtcaatggcctttctctacacaaagaataaacaggctgagaaagaaattagg
+gaaacaacacccttctcaatagccacaaataatataaaatatctcggcgtgactctaacg
+aaggaagtgaaagatctgtatgataaaaacttcaagtccctgaagaaagaaattaaagaa
+gatctcagaagatggaaagatctcccatgctcatggattggcaggaccaacattgtaaaa
+atggctatcttgccaaaagcaatctacagattcaatgcaatccccattaaaattccaact
+caattcttcaacgaattagaaggagcaatttgcaaattcatctggaataacaaaaaaccg
+aggatagcaaaaactcttctcaaggataaaagaacctctggtggaatcaccatgcctgac
+ctaaagctttactacagagcaattgtgataaaaactgcatggtactggtatagagacaga
+caagtggaccaatggaatagaattgaagacccagaaatgaacccacacacctatggtcac
+ttgatcttcgacaagggagccaaaaccatccagtggaagaaagacagcattttcaacaat
+tggtgctggcacaactggttgttatcatgtagaagaatgcgaatcgatccatacttatct
+ccttgtactaaggtcaaatctaagtggatcaaggaacttcacataaaaccagagacactg
+aaacttatagaggagaaagtggggaaaagccttgaagatatgggcacaggggaaaaattc
+ctgaacagaacagcaatggcttgtgctgtaagatcgagaattgacaaatgggacctaatg
+aaactccaaagtttctgcaaggcaaaagacactgtctataagacaaaaagaccaccaaca
+gactgggaaaggatctttacctatcctaaatcagataggggactaatatccaacatatat
+aaagaactcaagaaggtggacctcagaaaatcaaataacccccttaaaaaatggggctca
+gaactgaacaaagaattctcacctgaggaataccgaatggcagagaagcacctgaaaaaa
+tgttcaacatccttaatcatcagggaaatgcaaatcaaaacaaccctgagattccacctc
+acaccagtgagaatggctaagatcaaaaattcaggtgacagcagatgctggcgaggatgt
+ggagaaagaggaacactcctccattgttggtgggattgcaggcttgtacaaccactctgg
+aaatcagtctggcggttcctcagaaaattggacatagtactaccggaggatccagcaata
+cctctcctgggcatatatccagaagaagccccaactggtaagaaggacacatgctccact
+atgttcatagcagccttatttataatagccagaaactggaaagaacccagatgcccctca
+acagaggaatggatacagaaaatgtggtacatctacacaatggagtactactcagctatt
+aaaaagaatgaatttatgaaattcctagccaaatggatggacctggagagcatcatcctg
+agtgaggtaacacaatcacaaaggaactcacacaatatgtactcactgataagtggatac
+tagcccaaaacctaggatacccacgatataagatacaatttcctaaacacatgaaactca
+agaaaaatgaagactgaagtgtggacactatgcccctccttagaagtgggaacaaaacac
+ccatggaaggagttacagaaacaaagtttggagctgagatgaaaggatggaccatgtaga
+gactgccatatccagggatccaccccataatcagcatccaaacgctgacaccattgcata
+tactagcaagattttatcgaaaggacccagatgtagctgtctcttgtgagactatgccgg
+ggcctagcaaacacagaagtggatgctcacagtcagctaatggatggatcacagggctcc
+caatggaggagctagagaaagtacccaaggagctaaagggatcttcaaccctataggtgg
+aacaacattatgaactaaccagtacccctgagctcttgactctagctgcatatgtatcaa
+aagatggcctagtcggccatcactggaaagagaggcccattggacacgcagactttgtgt
+gccccggtacaggggaacgccagggccaaagggggggagtgggtgggtaggggagtgggg
+gtgggtgggtaagggggacttttggtatagcattggaaatgtaaatgagctaaataccta
+ataaaaaatggaaaaaaa
+>L1MdTf_II	L1	Mus musculus
+gaggacaggtgcccgcccggctggggaggcgrcctaagccacagcagcagcggtcgccat
+cttggtccgggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccag
+agaacctgacagcttctggaacaggcggaagcacagaggcgctgaggcagcaccctgtgt
+gggccggggacagccggccaccttccggaccggaggacaggtgcccacccggctggggag
+gcggcctaagccacagcagcagcggtcgccatcttggtccgggacccgccgaacttagga
+aattagtctgaacaggtgagagggtgcgccagagaacctgacagcttctggaacaggcgg
+aagcacagaggcgctgaggcagcaccctktgtgggccggggacagccrgccaccttccgg
+accggaggacaggtgcccgcccggctggggaggcggcctaagccacagcagcagcggtcg
+ccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcg
+ccagagaacctgacagcttctggaacaggcagaagcacagaggcgctgaggcagcaccct
+gtgtgggccggggacagccggccaccttccggaccggaggacaggtgcccgcccggctgg
+ggaggcgrcctaagccacagcagcagcggtcgccatcttggtccgggacccgccgaactt
+aggaaattagtctgaacaggtgagagggtgcgccagagaacctgacagcttctggaacag
+gcrgaagcacagaggcgctgaggcagcaccctktgtgggccggggacagccggccaccdt
+ccggaccggaggacaggtgcccgcccggctggggaggcggcctaagccacagcagcagcg
+gtcgccatcttggtccgrgacccgccgaacttaggaaattagtctgaacaggtgagaggg
+tgcgccagagaacctgacagcttctggaacaggcagaagcacagaggcgctgaggcagca
+ccctgtgtgggccggggacagccggccaccttccggaccggaggacaggtgcccacccgg
+ctggggaggcggcctaagccacagcagcagcggtcgccatcttggtcccgggactccaag
+gaacttaggaatttagtctgcttaggtgagagtctgtaccacctgggaactgccaaagca
+acacastgtctgagaaaggtcctgttttgggccttcttcttcggccaggaggaggtccaa
+atacaagatatctgcgcaccttccctgtaagagagcttgccagcagagagtgctctgagc
+actgaaactcagaggagagaatctgtctcccaggtctgctgatagacggtaacagaatca
+ccagaagaacaatctctaaacagagtcaactataactactaactccagagattaccagat
+ggcgaaaggtaaacggaggaatcttactaacaggaaccaagaccactcaccatcaccaga
+acccagcacacccacttcgcccagtccagggaaccccaacacacctgagaacctagacct
+agatttaaaagcatatctcatgatgatggtagaggacatcaagaaggactttaataaatc
+acttaaagaaatacaggagaacactgctaaagagttacaagtccttaaagaaaaacagga
+aaacacaatcaaacaggtagaagtccttacagaaaaagaggaaaaaacatacaaacaggt
+gatggaaatgaacaaaaccatactagacctaaaaagggaagtagacacaataaagaaaac
+tcaaagcgaggcaacactagagatagaaaccctaggaaagaaatctggaaccatagattt
+gagcatcagcaacagaatacaagagatggaagagagaatctcaggtgcagaagattccat
+agagaacatcggcacaacaatcaaagaaaatggaaaatgcaaaaagatcctaactcaaaa
+tatccaggaaatccaggacacaataagaagaccaaacgtacggataataggagtggatga
+gaatgaagattttcaactcaaaggtccagcaaacatcttcaacaaaattattgaagaaaa
+cttcccaaatctaaagaatgagatgcatatgaacatacaagaagcctacagaactccaaa
+tagactggaccagaaaagaaattcctcccgacacataataatcagaacatcaaatgcact
+aaataaagatagaatactaaaagcagtaagggaaaaaggtcaagtaacatataaaggcaa
+gcctatcagaattacaccagatttttcaccagagactatgaaagccagaagagcctggac
+agatgttatacagacactaagagaacacaaactgcagcccaggctactatacccagccaa
+actctcaattatcatagagggagaaaccaaagtattccacgacaaaaccaaattcacgca
+ttatctctccacgaatccagcccttcaaaggataataacagaaaaaaaccaatacaagaa
+cgggaacaacgccctagaaaaaacaagaaggtaatccctcaacaaacctaaaagaagaca
+gccacaagaacagaatgccacctttaacaactaaaataacaggaagcaacaattactttt
+ccttaatatctcttaacatcaatggtctcaactcgccaataaaaagacatagactaacaa
+actggctacacaaacaagacccaacattttgctgcttacaggaaactcatctcagagaaa
+aagatagacactacctcagaatgaaaggctggaaaacaattttccaagcaaatggtatga
+agaaacaagcaggagtagccatcctaatatctgataagattgacttccaacccaaagtca
+tcaaaaaagacaaggagggacacttcattctcatcaaaggtaaaatcctccaagaggaac
+tctcaattctgaatatctatgctccaaatacaagagcagccacattcactaaagaaactt
+tagtaaagctcaaagcacacattgcgcctcacacaataatagtgggagacttcaacacac
+cactttcaccaatggacagatcatggaaacagaaactaaacagggacacactgaaactaa
+cagaagtgatgaaacaaatggatctgacagatatctacagaacattttatcctaaaacaa
+aaggatataccttcttctcagcacctcatggtaccttctccaaaattgaccacataatag
+gtcacaaatcaggcctcaacagattcaaaaatattgaaattgtcccatgtatcctatcag
+atcaccatgcactaaggctgatcttcaataacaaaataaataacagaaagccaacattca
+catggaaactgaacaacactcttctcaatgataccttggtcaaggaaggaataaagaaag
+aaattaaagactttttagagtttaatgaaaatgaagccacaacgtacccaaacctttggg
+acacaatgaaagcatttctaagagggaaactcatagctatgagtgccttcaagaaaaaac
+gggagagagcacatactagcagcttgacaacacatctaaaagctctagaaaaaaaggaag
+caaattcacccaagaggagtagacggcaggaaataatcaaactcaggggtgaaatcaacc
+aagtggaaacaagaagaactattcaaagaattaaccaaacgaggagttggttctttgaga
+aaatcaacaagatagataaacccttagctagactcactaaagggcacagggacaaaatcc
+taattaacaaaatcagaaatgaaaagggagacataacaacagatcctgaagaaatccaaa
+acaccatcagatccttctacaaaaggctatactcaacaaaactggaaaacctggacgaaa
+tggacaaatttctggacagataccaggtaccaaagttgaatcaggatcaagttgaccttc
+taaacagtcccatatcccctaaagaaatagaagcagttattaatagtctcccagccaaaa
+aaagcccaggaccagacgggtttagtgcagagttctatcagaccttcaaagaagatctaa
+ctccagttctgcacaaactttttcacaagatagaagtagaaggtattctacccaactcat
+tttatgaagccactattactctgatacctaaaccacagaaagatccaacaaagatagaga
+acttcagaccaatttctcttatgaacatcgatgcaaaaattcttaataaaattctcgcta
+accgaatccaagaacacattaaagcaatcatccatcctgaccaagtaggttttattccag
+ggatgcagggatggtttaatatacgaaaatccatcaatgtaatccattatataaacaaac
+tcaaagacaaaaaccacatgatcatctcgttagatgcagaaaaagcatttgacaagatcc
+aacacccattcatgataaaagttctggaaagatcaggaattcaaggccaatacctaaaca
+tgataaaagcaatctacagcaaaccagtagccaacatcaaagtaaatggagagaagctgg
+aagcaatcccactaaaatcagggactagacaaggctgcccactttctccctaccttttca
+acatagtacttgaagtattagccagagcaattcgacaacaaaaggagatcaaggggatac
+aaattggaaaagaggaagtcaaaatatcactttttgcagatgatatgatagtatatataa
+gtgaccctaaaaattccaacagagaactcctaaacctgataaacagcttcggtgaagtag
+ctggatataaaattaactcaaacaagtcaatggcctttctctacacaaagaataaacagg
+ctgagaaagaaattagggaaacaacacccttctcaatagccacaaataatataaaatatc
+tcggcgtgactctaacgaaggaagtgaaagatctgtatgataaaaacttcaagtccctga
+agaaagaaattaaagaagatctcagaagatggaaagatctcccatgctcatggattggca
+ggaccaacattgtaaaaatggctatcttgccaaaagcaatctacagattcaatgcaatcc
+ccattaaaattccaactcaattcttcaacgaattagaaggagcaatttgcaaattcatct
+ggaataacaaaaaaccgaggatagcaaaaactcttctcaaggataaaagaacctctggtg
+gaatcaccatgcctgacctaaagctttactacagagcaattgtgataaaaactgcatggt
+actggtatagagacagacaagtggaccaatggaatagaattgaagacccagaaatgaacc
+cacacacctatggtcacttgatcttcgacaagggagccaaaaccatccagtggaagaaag
+acagcattttcaacaattggtgctggcacaactggttgttatcatgtagaagaatgcgaa
+tcgatccatacttatctccttgtactaaggtcaaatctaagtggatcaaggaacttcaca
+taaaaccagagacactgaaacttatagaggagaaagtggggaaaagccttgaagatatgg
+gcacaggggaaaaattcctgaacagaacagcaatggcttgtgctgtaagatcgagaattg
+acaaatgggacctaatgaaactccaaagtttctgcaaggcaaaagacactgtctataaga
+caaaaagaccaccaacagactgggaaaggatctttacctatcctaaatcagataggggac
+taatatccaacatatataaagaactcaagaaggtggacctcagaaaatcaaataaccccc
+ttaaaaaatggggctcagaactgaacaaagaattctcacctgaggaataccgaatggcag
+agaagcacctgaaaaaatgttcaacatccttaatcatcagggaaatgcaaatcaaaacaa
+ccctgagattccacctcacaccagtgagaatggctaagatcaaaaattcaggtgacagca
+gatgctggcgaggatgtggagaaagaggaacactcctccattgttggtgggattgcaggc
+ttgtacaaccactctggaaatcagtctggcggttcctcagaaaattggacatagtactac
+cggaggatccagcaatacctctcctgggcatatatccagaagaagccccaactggtaaga
+aggacacatgctccactatgttcatagcagccttatttataatagccagaaactggaaag
+aacccagatgcccctcaacagaggaatggatacagaaaatgtggtacatctacacaatgg
+agtactactcagctattaaaaagaatgaatttatgaaattcctagccaaatggatggacc
+tggagagcatcatcctgagtgaggtaacacaatcacaaaggaactcacacaatatgtact
+cactgataagtggatactagcccaaaacctaggatacccacgatataagatacaatttcc
+taaacacatgaaactcaagaaaaatgaagactgaagtgtggacactatgcccctccttag
+aagtgggaacaaaacacccatggaaggagttacagaaacaaagtatggagctgagatgaa
+aggatggaccatgtagagactgccatatccagggatccaccccataatcagcttccaaat
+gctgacaccattgcatacactagcaagattttactgaaaggacccagatgtagctgtctc
+ttgtgagactatgccggggcctagcaaacacagaagtggatgctcacagtcagctaatgg
+atggatcacagggctcccaatggaggagctagagaaagtacccaaggagctaaagggatc
+ttcaaccctataggtggaacaacattatgaactaaccagtacccctgagctcttgactct
+agctgcatatgtatcaaaagatggcctagtcggccatcactggaaagagaggcccattgg
+acacgcagactttgtgtgccccggtacaggggaacgccagggccaaagggggggagtggg
+tgggtaggggagtgggggtgggtgggtaagggggacttttggtatagcattggaaatgta
+aatgagctaaatacctaataaaaaatgdaaaaaaa
+```
+</details>
+
+To store frequently used `Snakemake` command line values, set up a `config.yaml` in ~/.config/snakemake/standard/:
+
+```yaml
+cores: 32
+latency-wait: 20
+use-conda: True # recommended
+rerun-incomplete: True
+printshellcmds: True
+cache: False
+show-failed-logs: True
+use-apptainer: True #recommended
+keep-going: True
 ```
 
-To run the workflow with **apptainer** / **singularity**, add a link to a container registry in the `Snakefile`, for example `container: "oras://ghcr.io/<user>/<repository>:<version>"` for Github's container registry.
-Run the workflow with:
+To run the workflow:
 
-```bash
-snakemake --cores 2 --sdm conda apptainer --directory .test
+```shell
+$ snakemake --profile /home/niek/.config/snakemake/standard/
 ```
 
-## Authors
+## Output
 
-- Firstname Lastname
-  - Affiliation
-  - ORCID profile
-  - home page
+```shell
+results/
+├── fasta
+│   ├── KO_1.collapsed.fasta
+│   ├── KO_2.collapsed.fasta
+│   ├── WT_1.collapsed.fasta
+│   └── WT_2.collapsed.fasta
+├── length_distribution
+│   ├── KO_1_length_distribution.txt
+│   ├── KO_2_length_distribution.txt
+│   ├── WT_1_length_distribution.txt
+│   └── WT_2_length_distribution.txt
+├── pingpong
+│   ├── KO_1.bam
+│   ├── KO_1.csv
+│   ├── KO_2.bam
+│   ├── KO_2.csv
+│   ├── WT_1.bam
+│   ├── WT_1.csv
+│   ├── WT_2.bam
+│   └── WT_2.csv
+├── plots
+│   ├── length_distribution.csv
+│   ├── length_distribution.pdf
+│   ├── pingpong.csv
+│   ├── pingpong.pdf
+│   └── pirna_sequence_bias
+│       ├── L1MdTf_I
+│       │   ├── KO_vs_WT_bargraph.pdf
+│       │   ├── KO_vs_WT_frequencies.csv
+│       │   └── KO_vs_WT_logo.pdf
+│       ├── L1MdTf_II
+│       │   ├── KO_vs_WT_bargraph.pdf
+│       │   ├── KO_vs_WT_frequencies.csv
+│       │   └── KO_vs_WT_logo.pdf
+│       └── L1MdTf_III
+│           ├── KO_vs_WT_bargraph.pdf
+│           ├── KO_vs_WT_frequencies.csv
+│           └── KO_vs_WT_logo.pdf
+├── seqs
+│   ├── KO_1_seqs.txt
+│   ├── KO_2_seqs.txt
+│   ├── WT_1_seqs.txt
+│   └── WT_2_seqs.txt
+└── trimmed
+    ├── KO_1_qc.txt
+    ├── KO_2_qc.txt
+    ├── WT_1_qc.txt
+    └── WT_2_qc.txt
+```
 
 ## References
 
 > Köster, J., Mölder, F., Jablonski, K. P., Letcher, B., Hall, M. B., Tomkins-Tinch, C. H., Sochat, V., Forster, J., Lee, S., Twardziok, S. O., Kanitz, A., Wilm, A., Holtgrewe, M., Rahmann, S., & Nahnsen, S. _Sustainable data analysis with Snakemake_. F1000Research, 10:33, 10, 33, **2021**. https://doi.org/10.12688/f1000research.29032.2.
-
-## TODO
-
-- Replace `<owner>` and `<repo>` everywhere in the template with the correct user name/organization, and the repository name. The workflow will be automatically added to the [snakemake workflow catalog](https://snakemake.github.io/snakemake-workflow-catalog/index.html) once it is publicly available on Github.
-- Replace `<name>` with the workflow name (can be the same as `<repo>`).
-- Replace `<description>` with a description of what the workflow does.
-- Update the [deployment](#deployment-options), [authors](#authors) and [references](#references) sections.
-- Update the `README.md` badges. Add or remove badges for `conda`/`singularity`/`apptainer` usage depending on the workflow's [deployment](#deployment-options) options.
-- Do not forget to also adjust the configuration-specific `config/README.md` file.
