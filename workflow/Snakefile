@@ -12,6 +12,14 @@ configfile: "config/config.yaml"
 include: "rules/common.smk"
 
 
+# Set minimum snakemake version
+min_version("8.25.5")
+
+
+# Define Docker container
+containerized: "docker://niekwit/smallrna-seq:v0.1"
+
+
 GENOME = config["genome"]
 SAMPLES = samples()
 LEADER_SAMPLE = SAMPLES[0]
