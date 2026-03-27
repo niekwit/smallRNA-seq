@@ -92,7 +92,7 @@ p <- ggplot(
 # If so, facet by repeat_id
 if (length(unique(df$repeat_id)) > 1) {
   p <- p +
-    facet_wrap(~repeat_id, ncol = 2) +
+    facet_wrap(~repeat_id, ncol = 2, scales = "free_y") +
     labs(
       x = "Distance between 5' ends (nt)",
       y = "Frequency"
