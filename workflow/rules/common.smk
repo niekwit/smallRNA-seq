@@ -1,5 +1,6 @@
 import glob
 import re
+import sys
 import pandas as pd
 
 # from snakemake.utils import validate
@@ -98,5 +99,8 @@ def plot_length_distribution_input(wildcards):
         input["sam"] = expand(
             "results/mirna_correction/{sample}_count.sam", sample=SAMPLES
         )
+        print("Using miRNA-based correction by alignment not working yet...")
+        print("Please select another method")
+        sys.exit(1)
 
     return input
