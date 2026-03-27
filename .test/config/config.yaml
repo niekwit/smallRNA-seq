@@ -2,8 +2,8 @@ genome: mm39 # hg38 or mm39
 
 samples:
   # sample: condition
-  control_1: WT
-  control_2: WT
+  WT_1: WT
+  WT_2: WT
   KO_1: KO
   KO_2: KO
 reference_condition: WT
