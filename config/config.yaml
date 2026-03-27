@@ -23,12 +23,14 @@ tesmall:
 
 length_distribution:
   apply_mirna_correction: TRUE
+  mirna_correction_method: length # length or align
+
   # miRNA length range for correction
+  # (for mirna_correction_method = length)
   mirna_min: 19
   mirna_max: 25
 
 pingpong:
   mismatch: 3
   fasta: resources/L1mTf.fa
-  name: L1Md_Tf
   window: 30
