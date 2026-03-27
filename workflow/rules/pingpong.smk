@@ -43,7 +43,7 @@ rule align:
     output:
         bam="results/pingpong/{sample}.bam"
     params:
-        index_prefix="resources/bowtie1_index/pingpong",
+        index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
         mismatch=config["pingpong"]["mismatch"]
     threads: 4
     log:
