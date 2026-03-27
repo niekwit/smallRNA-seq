@@ -1,29 +1,89 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 description: main configuration schema for the workflow
+
+type: object
+
 properties:
-  samplesheet:
+  genome:
     type: string
-    description: path to sample-sheet TSV file
+    description: The reference genome to be used.
+    enum: ["hg38", "mm39"]
 
-  get_genome:
+  samples:
+    type: object
+    description: Mapping of sample names to their respective experimental conditions.
+    additionalProperties:
+      type: string
+
+  reference_condition:
+    type: string
+    description: The condition to be used as the baseline for differential analysis.
+
+  cutadapt:
     type: object
     properties:
-      ncbi_ftp:
+      adapter:
         type: string
-        description: URL for genome retrieval
-    required: ["ncbi_ftp"]
+        description: 3' adapter sequence to be trimmed.
+      extra:
+        type: string
+        description: Additional command line arguments for cutadapt.
+    required: ["adapter"]
 
-  simulate_reads:
+  tesmall:
     type: object
     properties:
-      read_length:
-        type: number
-        description: length of target reads in bp
-      read_number:
-        type: number
-        description: number of total reads to be simulated
+      run_tesmall:
+        type: boolean
+        description: Whether to execute the TEsmall annotation pipeline.
+      dbfolder:
+        type: string
+        description: Path to the TEsmall database directory.
+      minlen:
+        type: integer
+        minimum: 0
+      maxlen:
+        type: integer
+      maxaln:
+        type: integer
+      mismatch:
+        type: integer
+      extra_args:
+        type: string
+    required: ["run_tesmall"]
+
+  length_distribution:
+    type: object
+    properties:
+      apply_mirna_correction:
+        type: boolean
+        description: Enable miRNA-based normalization for length distribution plots.
+      mirna_min:
+        type: integer
+        description: Minimum length of the miRNA normalization window.
+      mirna_max:
+        type: integer
+        description: Maximum length of the miRNA normalization window.
+    required: ["apply_mirna_correction"]
+
+  pingpong:
+    type: object
+    properties:
+      mismatch:
+        type: integer
+        description: Allowed mismatches for ping-pong analysis.
+      fasta:
+        type: string
+        description: Path to the consensus sequence FASTA file.
+      name:
+        type: string
+        description: Display name for the analyzed element.
+      window:
+        type: integer
+        description: Analysis window size.
+    required: ["fasta", "name"]
 
 required:
-  - samplesheet
-  - get_genome
-  - simulate_reads
+  - genome
+  - samples
+  - reference_condition
