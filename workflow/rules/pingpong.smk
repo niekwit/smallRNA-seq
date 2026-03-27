@@ -2,14 +2,16 @@
 # --------------------------------------------
 rule bowtie_index:
     input:
-        fasta=config["pingpong"]["fasta"]
+        fasta=config["pingpong"]["fasta"],
     output:
-        index_files=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT)
+        index_files=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT),
     params:
-        index_prefix=lambda wildcards, output: output.index_files[0].replace(".1.ebwt", "")
+        index_prefix=lambda wildcards, output: output.index_files[0].replace(
+            ".1.ebwt", ""
+        ),
     threads: 1
     log:
-        "logs/bowtie/pingpong.log"
+        "logs/bowtie/pingpong.log",
     conda:
         "../envs/pingpong.yaml"
     shell:
@@ -25,7 +27,7 @@ rule collapse_sequences:
         fasta="results/fasta/{sample}.collapsed.fasta",
     threads: 2
     log:
-        "logs/pingpong/{sample}_collapse.log"
+        "logs/pingpong/{sample}_collapse.log",
     conda:
         "../envs/pingpong.yaml"
     shell:
@@ -39,15 +41,15 @@ rule collapse_sequences:
 rule align:
     input:
         fasta="results/fasta/{sample}.collapsed.fasta",
-        index=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT)
+        index=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT),
     output:
-        bam="results/pingpong/{sample}.bam"
+        bam="results/pingpong/{sample}.bam",
     params:
         index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
-        mismatch=config["pingpong"]["mismatch"]
+        mismatch=config["pingpong"]["mismatch"],
     threads: 4
     log:
-        "logs/pingpong/{sample}_align.log"
+        "logs/pingpong/{sample}_align.log",
     conda:
         "../envs/pingpong.yaml"
     shell:
@@ -62,6 +64,7 @@ rule align:
         "-F 4 -bS - | "
         "samtools sort -o {output.bam}"
 
+
 # Perform ping-pong analysis
 # ------------------------------------------------------------
 rule pingpong_analysis:
@@ -70,34 +73,34 @@ rule pingpong_analysis:
     output:
         pingpong="results/pingpong/{sample}.csv",
     params:
-        window=config["pingpong"]["window"]
+        window=config["pingpong"]["window"],
     threads: 2
     log:
-        "logs/pingpong/{sample}_analysis.log"
+        "logs/pingpong/{sample}_analysis.log",
     conda:
         "../envs/pingpong.yaml"
     script:
         "../scripts/pingpong.py"
 
+
 # Plot ping-pong results
 # ------------------------------------------------------------
 rule plot_pingpong:
     input:
-        pingpong=expand("results/pingpong/{sample}.csv", sample=SAMPLES)
+        pingpong=expand("results/pingpong/{sample}.csv", sample=SAMPLES),
     output:
         pdf="results/plots/pingpong.pdf",
-        csv="results/plots/pingpong.csv"
-    params:
+        csv="results/plots/pingpong.csv",
     threads: 1
     log:
-        "logs/pingpong/plot_pingpong.log"
+        "logs/pingpong/plot_pingpong.log",
     conda:
         "../envs/R.yaml"
     script:
         "../scripts/plot_pingpong.R"
 
 
-# Plot 1U/10A bias  
+# Plot 1U/10A bias
 # ------------------------------------------------------------
 rule plot_sequence_bias_pirna:
     input:
@@ -105,16 +108,17 @@ rule plot_sequence_bias_pirna:
     output:
         logo="results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
         bar="results/plots/pirna_sequence_bias/{te}/{comparison}_bargraph.pdf",
-        csv="results/plots/pirna_sequence_bias/{te}/{comparison}_frequencies.csv"
+        csv="results/plots/pirna_sequence_bias/{te}/{comparison}_frequencies.csv",
     threads: 2
     log:
-        "logs/pingpong/{te}_plot_sequence_bias_{comparison}.log"
+        "logs/pingpong/{te}_plot_sequence_bias_{comparison}.log",
     conda:
         "../envs/R.yaml"
     script:
         "../scripts/sequence_bias_pirna.R"
 
-'''
+
+"""
 # Get length distribution of TE-aligned reads
 # ------------------------------------------------------------
 rule length_distribution_aligned_to_TE:
@@ -130,4 +134,4 @@ rule length_distribution_aligned_to_TE:
         "../envs/R.yaml"
     script:
         "../scripts/length_distribution.R"
-'''
+"""

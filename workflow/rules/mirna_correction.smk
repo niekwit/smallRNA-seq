@@ -1,10 +1,10 @@
 rule download_mirna_fasta:
     output:
-        fasta = "resources/mirhairpin.fa"
+        fasta="resources/mirhairpin.fa",
     params:
-        url = "https://www.mirbase.org/download/hairpin.fa"
+        url="https://www.mirbase.org/download/hairpin.fa",
     log:
-        "logs/download_mirna.log"
+        "logs/download_mirna.log",
     conda:
         "../envs/process_reads.yaml"
     shell:
@@ -13,13 +13,13 @@ rule download_mirna_fasta:
 
 rule subset_mirna_fasta:
     input:
-        fasta="resources/mirhairpin.fa"
+        fasta="resources/mirhairpin.fa",
     output:
-        fasta=f"resources/mirhairpin_{MIRBASE_GENOME}.fa"
+        fasta=f"resources/mirhairpin_{MIRBASE_GENOME}.fa",
     params:
-        genome=MIRBASE_GENOME.replace("_", " ")
+        genome=MIRBASE_GENOME.replace("_", " "),
     log:
-        f"logs/seqkit_{MIRBASE_GENOME}.log"
+        f"logs/seqkit_{MIRBASE_GENOME}.log",
     conda:
         "../envs/process_reads.yaml"
     shell:
@@ -30,9 +30,9 @@ rule mirna_index:
     input:
         fasta=f"resources/mirhairpin_{MIRBASE_GENOME}.fa",
     output:
-        index_files=expand("resources/bowtie1_index/mirna.{ext}", ext=EXT)
+        index_files=expand("resources/bowtie1_index/mirna.{ext}", ext=EXT),
     log:
-        "logs/bowtie/mirna.log"
+        "logs/bowtie/mirna.log",
     conda:
         "../envs/pingpong.yaml"
     shell:
@@ -42,15 +42,15 @@ rule mirna_index:
 rule align_to_mirna:
     input:
         fasta="results/fasta/{sample}.collapsed.fasta",
-        index=expand("resources/bowtie1_index/mirna.{ext}", ext=EXT)
+        index=expand("resources/bowtie1_index/mirna.{ext}", ext=EXT),
     output:
-        counts="results/mirna_correction/{sample}.txt"
+        counts="results/mirna_correction/{sample}.txt",
     params:
         index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
-        mismatch=0
+        mismatch=0,
     threads: 4
     log:
-        "logs/mirna_correction/{sample}_count.log"
+        "logs/mirna_correction/{sample}_count.log",
     conda:
         "../envs/pingpong.yaml"
     shell:
