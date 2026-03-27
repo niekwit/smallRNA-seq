@@ -7,4 +7,8 @@ dependencies:
   - r-base=4.4
   - r-tidyverse=2.0.0
   - r-cowplot=1.2.0
+  - r-ggseqlogo=0.2.2
   - bioconda::bioconductor-deseq2=1.46.0
+  - bioconda::bioconductor-biostrings=2.74.0
+  - bioconda::bioconductor-rsamtools=2.22.0
+  - conda-forge::r-gridextra=2.3
