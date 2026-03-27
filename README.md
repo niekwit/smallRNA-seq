@@ -1,7 +1,7 @@
 # Snakemake workflow: `smallRNA-seq`
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥8.25.5-brightgreen.svg)](https://snakemake.github.io)
-[![GitHub actions status](https://github.com/niekwit/smallRNA-seq/workflows/Tests/badge.svg?branch=main)](https://github.com/niekwit/smallRNA-seq/actions?query=branch%3Amain+workflow%3ATests)
+[![Tests](https://github.com/niekwit/smallRNA-seq/actions/workflows/main.yaml/badge.svg)](https://github.com/niekwit/smallRNA-seq/actions/workflows/main.yaml)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![workflow catalog](https://img.shields.io/badge/Snakemake%20workflow%20catalog-darkgreen)](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/niekwit/smallRNA-seq)
 
@@ -103,7 +103,7 @@ The FASTA file under config[pingpong][fasta] should contain the TE sequences of 
 <details>
   <summary>Example TE fasta file</summary>
 
-  ```fasta
+```fasta
 >L1MdTf_III	L1	Mus musculus
 agcagcagcggtcgccatctkggttccgggactccgcgggacctaggaaattagtctgaa
 caggttagagggtgcgccagagaaccggacagcttctgggacgggcggaagcacagagcc
@@ -463,6 +463,7 @@ acacgcagactttgtgtgccccggtacaggggaacgccagggccaaagggggggagtggg
 tgggtaggggagtgggggtgggtgggtaagggggacttttggtatagcattggaaatgta
 aatgagctaaatacctaataaaaaatgdaaaaaaa
 ```
+
 </details>
 
 To store frequently used `Snakemake` command line values, set up a `config.yaml` in ~/.config/snakemake/standard/:
