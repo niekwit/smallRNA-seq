@@ -2,11 +2,11 @@ genome: mm39 # hg38 or mm39
 
 samples:
   # sample: condition
-  control_1: Control
-  control_2: Control
+  control_1: WT
+  control_2: WT
   KO_1: KO
   KO_2: KO
-reference_condition: Control
+reference_condition: WT
 
 cutadapt:
   adapter: AGATCGGAAGA
