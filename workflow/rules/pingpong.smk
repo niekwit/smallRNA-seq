@@ -9,7 +9,7 @@ rule bowtie_index:
         index_prefix=lambda wildcards, output: output.index_files[0].replace(".1.ebwt", "")
     threads: 1
     log:
-        "logs/pingpong/build_bowtie1_index.log"
+        "logs/bowtie/pingpong.log"
     conda:
         "../envs/pingpong.yaml"
     shell:
@@ -113,3 +113,21 @@ rule plot_sequence_bias_pirna:
         "../envs/R.yaml"
     script:
         "../scripts/sequence_bias_pirna.R"
+
+'''
+# Get length distribution of TE-aligned reads
+# ------------------------------------------------------------
+rule length_distribution_aligned_to_TE:
+    input:
+        bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
+    output:
+        pdf="results/plots/length_distribution.pdf",
+        csv="results/plots/length_distribution.csv"
+    threads: 1
+    log:
+        "logs/pingpong/length_distribution.log"
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/length_distribution.R"
+'''
