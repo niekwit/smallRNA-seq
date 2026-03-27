@@ -32,5 +32,5 @@ length_distribution:
 
 pingpong:
   mismatch: 3
-  fasta: resources/L1MdTf_III.fa
+  fasta: resources/L1mTf.fa
   window: 30
