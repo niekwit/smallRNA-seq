@@ -31,6 +31,7 @@ jobs:
         with:
           directory: .
           snakefile: workflow/Snakefile
+          snakemake-version: "8.25.5"
           args: "--lint"
 
   Testing:
