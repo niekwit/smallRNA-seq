@@ -18,11 +18,13 @@ LEADER_SAMPLE = SAMPLES[0]
 EXT = ["1.ebwt", "2.ebwt", "3.ebwt", "4.ebwt", "rev.1.ebwt", "rev.2.ebwt"]
 COMPARISONS = comparisons(config)
 TE = te(config)
+MIRBASE_GENOME = mirbase_genome(config)
 
 
 include: "rules/length_distribution.smk"
 include: "rules/te_small.smk"
 include: "rules/pingpong.smk"
+include: "rules/mirna_correction.smk"
 
 
 onstart:
