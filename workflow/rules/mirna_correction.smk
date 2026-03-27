@@ -5,6 +5,8 @@ rule download_mirna_fasta:
         url = "https://www.mirbase.org/download/hairpin.fa"
     log:
         "logs/download_mirna.log"
+    conda:
+        "../envs/process_reads.yaml"
     shell:
         "wget -O {output.fasta} {params.url} > {log} 2>&1"
 
@@ -44,7 +46,7 @@ rule align_to_mirna:
     output:
         counts="results/mirna_correction/{sample}.txt"
     params:
-        index_prefix="resources/bowtie1_index/mirna",
+        index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
         mismatch=0
     threads: 4
     log:
