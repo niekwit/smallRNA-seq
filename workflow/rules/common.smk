@@ -86,7 +86,7 @@ def mirbase_genome(config):
 
 def plot_length_distribution_input(wildcards):
     input = {
-        "seqs": expand(
+        "counts": expand(
             "results/length_distribution/{sample}_length_distribution.txt",
             sample=SAMPLES,
         )
@@ -95,7 +95,7 @@ def plot_length_distribution_input(wildcards):
     apply_correction = config["length_distribution"]["apply_mirna_correction"]
     method = config["length_distribution"]["mirna_correction_method"]
     if apply_correction and method == "align":
-        input["counts"] = expand(
+        input["sam"] = expand(
             "results/mirna_correction/{sample}_count.sam", sample=SAMPLES
         )
 
