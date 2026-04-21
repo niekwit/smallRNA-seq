@@ -10,6 +10,7 @@ library(cowplot)
 
 # Get data
 bam_files <- snakemake@input[["bam"]]
+nt_bias_files <- snakemake@input[["nt_bias"]]
 comparison <- snakemake@wildcards[["comparison"]]
 reference_condition <- str_split(comparison, "_vs_")[[1]][2]
 test_condition <- str_split(comparison, "_vs_")[[1]][1]
@@ -18,7 +19,7 @@ all_samples <- snakemake@config$samples
 
 sequence_lists <- list()
 
-# Read sequences
+# Read sequences for sequence logo
 for (condition in c(reference_condition, test_condition)) {
   # Get sample names for this condition from Snakemake config
   samples <- names(all_samples)[all_samples == condition]
@@ -96,60 +97,46 @@ gridExtra::grid.arrange(
 )
 dev.off()
 
-# Calculate the frequency of the first and tenth nucleotide
-freq_df <- data.frame(
-  Condition = character(),
-  Nucleotide = character(),
-  Frequency = numeric(),
-  Position = character()
+# Build a sample -> condition lookup from config
+sample_to_condition <- setNames(
+  unlist(all_samples),
+  names(all_samples)
 )
 
-for (condition in c(reference_condition, test_condition)) {
-  seqs <- sequence_lists[[condition]]
-  first_nt <- substr(seqs, 1, 1)
-  first_nt_table <- table(first_nt)
-  first_nt_freq <- first_nt_table / sum(first_nt_table)
-
-  temp_df <- data.frame(
-    Condition = condition,
-    Nucleotide = names(first_nt_freq),
-    Frequency = as.numeric(first_nt_freq),
-    Position = "1"
+# Read nucleotide bias CSVs (ping-pong pairs at distance 10 only) and
+# compute per-condition nucleotide frequencies at:
+#   position 1  -> antisense read position 1
+#   position 10 -> sense read position 10
+freq_df <- lapply(nt_bias_files, read_csv, show_col_types = FALSE) |>
+  bind_rows() |>
+  filter(repeat_id == te) |>
+  mutate(
+    Condition = sample_to_condition[sample],
+    Nucleotide = str_replace_all(nucleotide, "T", "U"),
+    Position = ifelse(strand == "antisense", "1", "10")
+  ) |>
+  filter(Condition %in% c(reference_condition, test_condition)) |>
+  group_by(Condition, Position, Nucleotide) |>
+  summarise(count = sum(count), .groups = "drop") |>
+  group_by(Condition, Position) |>
+  mutate(Frequency = count / sum(count)) |>
+  ungroup() |>
+  mutate(
+    Condition = factor(
+      Condition,
+      levels = c(reference_condition, test_condition)
+    ),
+    Nucleotide = factor(Nucleotide, levels = c("C", "A", "G", "U")),
+    Position = factor(Position, levels = c("1", "10")),
+    te = te
   )
-
-  freq_df <- rbind(freq_df, temp_df)
-
-  tenth_nt <- substr(seqs, 10, 10)
-  tenth_nt_table <- table(tenth_nt)
-  tenth_nt_freq <- tenth_nt_table / sum(tenth_nt_table)
-  temp_df <- data.frame(
-    Condition = condition,
-    Nucleotide = names(tenth_nt_freq),
-    Frequency = as.numeric(tenth_nt_freq),
-    Position = "10"
-  )
-  freq_df <- rbind(freq_df, temp_df)
-}
-
-# Set factor levels for consistent plotting order
-freq_df$Condition <- factor(
-  freq_df$Condition,
-  levels = c(reference_condition, test_condition)
-)
-freq_df$Nucleotide <- factor(
-  freq_df$Nucleotide,
-  levels = c("C", "A", "G", "U")
-)
-freq_df$Position <- factor(
-  freq_df$Position,
-  levels = c("1", "10")
-)
-
-freq_df$te <- te
 
 # Plot as stacked bar graph
 bar_pdf <- snakemake@output[["bar"]]
-p_bar <- ggplot(freq_df, aes(x = Condition, y = Frequency, fill = Nucleotide)) +
+p_bar <- ggplot(
+  freq_df,
+  aes(x = Condition, y = Frequency, fill = Nucleotide)
+) +
   geom_bar(stat = "identity", position = "fill", colour = "black") +
   scale_y_continuous(
     expand = expansion(mult = c(0, 0.1))
@@ -157,7 +144,10 @@ p_bar <- ggplot(freq_df, aes(x = Condition, y = Frequency, fill = Nucleotide)) +
   labs(
     x = NULL,
     y = "Nucleotide frequency",
-    title = paste0("Nucleotide frequency at\npositions 1 and 10 for ", te)
+    title = paste0(
+      "Nucleotide frequency at\nping-pong positions for ",
+      te
+    )
   ) +
   theme_cowplot(16) +
   theme(
@@ -176,7 +166,12 @@ p_bar <- ggplot(freq_df, aes(x = Condition, y = Frequency, fill = Nucleotide)) +
   facet_wrap(
     ~Position,
     ncol = 1,
-    labeller = labeller(Position = c("1" = "Position 1", "10" = "Position 10"))
+    labeller = labeller(
+      Position = c(
+        "1" = "Position 1 (antisense)",
+        "10" = "Position 10 (sense)"
+      )
+    )
   )
 
 ggsave(

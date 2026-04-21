@@ -72,6 +72,7 @@ rule pingpong_analysis:
         bam="results/pingpong/{sample}.bam",
     output:
         pingpong="results/pingpong/{sample}.csv",
+        nt_bias="results/pingpong/{sample}_nt_bias.csv",
     params:
         window=config["pingpong"]["window"],
     threads: 2
@@ -105,6 +106,7 @@ rule plot_pingpong:
 rule plot_sequence_bias_pirna:
     input:
         bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
+        nt_bias=expand("results/pingpong/{sample}_nt_bias.csv", sample=SAMPLES),
     output:
         logo="results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
         bar="results/plots/pirna_sequence_bias/{te}/{comparison}_bargraph.pdf",
