@@ -26,7 +26,7 @@ GENOME = config["genome"]
 SAMPLES = samples()
 
 # Only use a leader sample when the TEsmall genome database does not yet exist
-_tesmall_genome_db = os.path.join(config["tesmall"]["dbfolder"], GENOME)
+_tesmall_genome_db = os.path.join(config["tesmall"]["dbfolder"], "genomes", GENOME)
 LEADER_SAMPLE = SAMPLES[0] if not os.path.isdir(_tesmall_genome_db) else None
 EXT = ["1.ebwt", "2.ebwt", "3.ebwt", "4.ebwt", "rev.1.ebwt", "rev.2.ebwt"]
 COMPARISONS = comparisons(config)
