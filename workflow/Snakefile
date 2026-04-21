@@ -24,7 +24,10 @@ containerized: "docker://niekwit/smallrna-seq:v0.1"
 
 GENOME = config["genome"]
 SAMPLES = samples()
-LEADER_SAMPLE = SAMPLES[0]
+
+# Only use a leader sample when the TEsmall genome database does not yet exist
+_tesmall_genome_db = os.path.join(config["tesmall"]["dbfolder"], GENOME)
+LEADER_SAMPLE = SAMPLES[0] if not os.path.isdir(_tesmall_genome_db) else None
 EXT = ["1.ebwt", "2.ebwt", "3.ebwt", "4.ebwt", "rev.1.ebwt", "rev.2.ebwt"]
 COMPARISONS = comparisons(config)
 TE = te(config)

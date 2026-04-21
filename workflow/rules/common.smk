@@ -26,17 +26,11 @@ def get_dependencies(wildcards):
         "log": "logs/install_te_small.log",
     }
 
-    # Check if genome data base exists
-    # if not, a leader job will download it
-    # otherwise run all jobs in parallel
-    # fasta = os.path.join(config["tesmall"]["dbfolder"], "genomes", GENOME, "sequence", "genome.fa")
-    # bed = os.path.join(config["tesmall"]["dbfolder"], "genomes", GENOME, "annotations", "exon.bed")
-
-    # if not os.path.exists(fasta) or not os.path.exists(bed):
-    #    inputs["leader_finished"] = f"results/te_small/{LEADER_SAMPLE}_count_summary.txt"
-
-    # If this job is NOT the leader, make it wait for the leader
-    if wildcards.sample != LEADER_SAMPLE:
+    # When the genome database does not yet exist, LEADER_SAMPLE is set to the
+    # first sample so it runs alone and builds the database; all other samples
+    # wait for it. When the database already exists LEADER_SAMPLE is None and
+    # every sample runs in parallel immediately.
+    if LEADER_SAMPLE is not None and wildcards.sample != LEADER_SAMPLE:
         inputs["leader_finished"] = (
             f"results/te_small/{LEADER_SAMPLE}/count_summary.txt"
         )
