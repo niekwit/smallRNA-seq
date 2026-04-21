@@ -118,6 +118,23 @@ rule plot_sequence_bias_pirna:
         "../scripts/sequence_bias_pirna.R"
 
 
+# Plot per-TE positional read coverage (forward/reverse strand)
+# ------------------------------------------------------------
+rule te_pos_coverage:
+    input:
+        bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
+        fasta=config["pingpong"]["fasta"],
+    output:
+        pdf="results/plots/te_pos_coverage/{te}.pdf",
+    threads: 2
+    log:
+        "logs/pingpong/{te}_te_pos_coverage.log",
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/te_pos_coverage.R"
+
+
 """
 # Get length distribution of TE-aligned reads
 # ------------------------------------------------------------

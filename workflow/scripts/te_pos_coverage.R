@@ -1,0 +1,107 @@
+# Redirect R output to log
+log <- file(snakemake@log[[1]], open = "wt")
+sink(log, type = "output")
+sink(log, type = "print")
+
+library(Rsamtools)
+library(Biostrings)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+
+# Inputs from Snakemake
+bam_input <- snakemake@input[["bam"]]
+fasta_file <- snakemake@input[["fasta"]]
+te <- snakemake@wildcards[["te"]]
+out_pdf <- snakemake@output[["pdf"]]
+
+# Build named list: condition -> character vector of BAM paths
+all_samples <- snakemake@config$samples # named list: sample -> condition
+conditions <- unique(unlist(all_samples))
+
+bam_files <- lapply(conditions, function(cond) {
+  samples_in_cond <- names(all_samples)[all_samples == cond]
+  bam_input[
+    sapply(samples_in_cond, function(s) grepl(s, bam_input)) |>
+      rowSums() >
+      0
+  ]
+})
+names(bam_files) <- conditions
+
+# Helper: read relevant BAM fields for a single file ---
+read_bam <- function(bam_path) {
+  param <- ScanBamParam(what = c("qname", "flag", "rname", "pos"))
+  bam <- scanBam(bam_path, param = param)[[1]]
+  data.frame(
+    qname = bam$qname,
+    flag = bam$flag,
+    rname = as.character(bam$rname),
+    pos = bam$pos,
+    stringsAsFactors = FALSE
+  )
+}
+
+parse_count <- function(qnames) {
+  as.integer(sub(".*-(\\d+)$", "\\1", qnames))
+}
+
+# Read sequence length for this TE from FASTA
+print("Reading FASTA...")
+fa <- readDNAStringSet(fasta_file)
+names(fa) <- sub(" .*", "", names(fa))
+seq_len <- width(fa)[names(fa) == te]
+if (length(seq_len) == 0) {
+  stop("No FASTA entry found for TE: ", te)
+}
+
+# Load and merge replicates; keep only FLAG 0 (fwd) and FLAG 16 (rev)
+# Filter to the target TE immediately to reduce memory usage
+print("Loading BAM files...")
+reads <- lapply(names(bam_files), function(cond) {
+  df <- do.call(rbind, lapply(bam_files[[cond]], read_bam))
+  df$condition <- cond
+  df
+})
+reads <- do.call(rbind, reads)
+reads <- reads[reads$flag %in% c(0L, 16L) & reads$rname == te, ]
+
+reads$count <- parse_count(reads$qname)
+reads <- reads[!is.na(reads$count) & !is.na(reads$pos), ]
+reads$strand <- ifelse(reads$flag == 0L, "forward", "reverse")
+
+agg <- reads %>%
+  group_by(condition, strand, pos) %>%
+  summarise(raw = sum(count), .groups = "drop") %>%
+  group_by(condition, strand) %>%
+  mutate(norm = raw / sum(raw) * 100) %>%
+  ungroup() %>%
+  mutate(
+    norm = ifelse(strand == "reverse", -norm, norm),
+    condition = factor(condition, levels = names(bam_files))
+  )
+
+p <- ggplot(
+  agg,
+  aes(x = pos, xend = pos, y = 0, yend = norm, colour = strand)
+) +
+  geom_segment(linewidth = 0.4) +
+  geom_hline(yintercept = 0, colour = "grey60") +
+  facet_wrap(~condition, ncol = 1) +
+  scale_x_continuous(
+    limits = c(0, seq_len),
+    expand = c(0, 0),
+    breaks = seq(0, seq_len, by = 1000),
+  ) +
+  scale_colour_manual(values = c(forward = "#2196F3", reverse = "#E53935")) +
+  labs(
+    title = te,
+    x = "Position (bp)",
+    y = "Normalised read count (%)",
+    colour = "Strand"
+  ) +
+  theme_cowplot(12) +
+  theme(legend.position = "none")
+
+ggsave(out_pdf, p, width = 10, height = 5)
+print("Done.")

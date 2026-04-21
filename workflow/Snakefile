@@ -68,6 +68,10 @@ TARGETS = [
         te=TE,
         comparison=COMPARISONS,
     ),
+    expand(
+        "results/plots/te_pos_coverage/{te}.pdf",
+        te=TE,
+    ),
 ]
 
 if config["tesmall"]["run_tesmall"]:
