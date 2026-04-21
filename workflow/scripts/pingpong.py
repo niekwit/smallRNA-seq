@@ -104,9 +104,7 @@ def compute_ping_pong(bam_path, window=30):
     # defaultdict of Counter allows safe incrementing,
     # even when keys do not yet exist
     results = defaultdict(Counter)
-    nt_counts = defaultdict(
-        lambda: {"sense": Counter(), "antisense": Counter()}
-    )
+    nt_counts = defaultdict(lambda: {"sense": Counter(), "antisense": Counter()})
 
     for te, strands in te_list.items():
         F = strands["F"]
@@ -157,6 +155,15 @@ with open(out, "w", newline="") as fh:
     for te, counter in res.items():
         for d, c in sorted(counter.items()):
             writer.writerow([te, d, c, sample])
+
+# Remove "N" from nt_counts before writing nucleotide bias CSV
+nt_counts = {
+    te: {
+        strand: Counter({nt: c for nt, c in counter.items() if nt != "N"})
+        for strand, counter in strands.items()
+    }
+    for te, strands in nt_counts.items()
+}
 
 # Write nucleotide bias CSV (ping-pong pairs at distance 10 only)
 with open(out_nt_bias, "w", newline="") as fh:
