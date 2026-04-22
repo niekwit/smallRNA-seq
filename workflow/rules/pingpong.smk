@@ -1,3 +1,95 @@
+# Download Ensembl ncRNA FASTA for the configured genome and release
+# ------------------------------------------------------------
+rule download_ncrna_fasta:
+    output:
+        fa=f"resources/ncrna/{GENOME}.ncrna.fa.gz",
+    params:
+        url=NCRNA_URL,
+    retries: 3
+    log:
+        f"logs/ncrna/download.log",
+    conda:
+        "../envs/pingpong.yaml"
+    shell:
+        "wget -q -O {output.fa} {params.url} 2> {log}"
+
+
+# Extract excluded ncRNA biotypes to use as the filter reference.
+# Reads mapping to these sequences will be removed before ping-pong
+# analysis; lncRNAs are intentionally excluded from this filter so
+# that reads from lncRNA-hosted piRNA clusters are retained.
+# ------------------------------------------------------------
+rule filter_ncrna_fasta:
+    input:
+        fa=f"resources/ncrna/{GENOME}.ncrna.fa.gz",
+    output:
+        fa=f"resources/ncrna/{GENOME}.excluded_ncrna.fa",
+    log:
+        f"logs/ncrna/filter_fasta.log",
+    conda:
+        "../envs/pingpong.yaml"
+    shell:
+        "seqkit grep "
+        "-r "
+        '-p "gene_biotype:(miRNA|misc_RNA|Mt_rRNA|Mt_tRNA|ribozyme|rRNA|scaRNA|scRNA|snoRNA|snRNA|sRNA)" '
+        "{input.fa} "
+        "-o {output.fa} "
+        "2> {log}"
+
+
+# Build bowtie1 index from the excluded ncRNA sequences
+# ------------------------------------------------------------
+rule bowtie_index_ncrna:
+    input:
+        fa=f"resources/ncrna/{GENOME}.excluded_ncrna.fa",
+    output:
+        index_files=expand(
+            f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT
+        ),
+    params:
+        index_prefix=f"resources/bowtie1_index/ncrna_{GENOME}",
+    threads: 1
+    log:
+        f"logs/ncrna/bowtie_index.log",
+    conda:
+        "../envs/pingpong.yaml"
+    shell:
+        "bowtie-build {input.fa} {params.index_prefix} > {log} 2>&1"
+
+
+# Filter collapsed reads against excluded ncRNA index.
+# Non-aligning reads (piRNA candidates) continue to ping-pong analysis.
+# Aligning reads are saved as a BAM for QC/troubleshooting.
+# ------------------------------------------------------------
+rule filter_ncrna_reads:
+    input:
+        fasta="results/fasta/{sample}.collapsed.fasta",
+        index=expand(
+            f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT
+        ),
+    output:
+        fasta="results/fasta/{sample}.ncrna_filtered.fasta",
+        bam="results/ncrna_filter/{sample}.bam",
+    params:
+        index_prefix=f"resources/bowtie1_index/ncrna_{GENOME}",
+    threads: 4
+    log:
+        "logs/ncrna/{sample}_filter_reads.log",
+    conda:
+        "../envs/pingpong.yaml"
+    shell:
+        "bowtie "
+        "-f --sam "
+        "--threads {threads} "
+        "-v 0 "
+        "-a --best -k 1 "
+        "--un {output.fasta} "
+        "-x {params.index_prefix} "
+        "{input.fasta} 2> {log} | "
+        "samtools view -F 4 -bS - | "
+        "samtools sort -o {output.bam}"
+
+
 # Build bowtie1 index for ping-pong analysis
 # --------------------------------------------
 rule bowtie_index:
@@ -40,7 +132,7 @@ rule collapse_sequences:
 # ------------------------------------------------------------
 rule align:
     input:
-        fasta="results/fasta/{sample}.collapsed.fasta",
+        fasta="results/fasta/{sample}.ncrna_filtered.fasta",
         index=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT),
     output:
         bam="results/pingpong/{sample}.bam",

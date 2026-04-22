@@ -79,6 +79,26 @@ def mirbase_genome(config):
         raise ValueError(f"Unsupported genome: {genome}")
 
 
+def ensembl_ncrna_url(config):
+    genome = config["genome"]
+    release = config["release"]
+
+    genome_map = {
+        "mm39": ("mus_musculus", "GRCm39", "Mus_musculus"),
+        "hg38": ("homo_sapiens", "GRCh38", "Homo_sapiens"),
+    }
+
+    if genome not in genome_map:
+        raise ValueError(f"Unsupported genome for Ensembl ncRNA download: {genome}")
+
+    species, assembly, species_cap = genome_map[genome]
+    filename = f"{species_cap}.{assembly}.ncrna.fa.gz"
+    return (
+        f"https://ftp.ensembl.org/pub/release-{release}"
+        f"/fasta/{species}/ncrna/{filename}"
+    )
+
+
 def plot_length_distribution_input(wildcards):
     input = {
         "counts": expand(
