@@ -31,6 +31,7 @@ rule filter_ncrna_fasta:
     shell:
         "seqkit grep "
         "-r "
+        "-n "
         '-p "gene_biotype:(miRNA|misc_RNA|Mt_rRNA|Mt_tRNA|ribozyme|rRNA|scaRNA|scRNA|snoRNA|snRNA|sRNA)" '
         "{input.fa} "
         "-o {output.fa} "
