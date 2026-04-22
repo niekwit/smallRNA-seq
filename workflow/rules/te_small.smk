@@ -38,7 +38,7 @@ rule run_te_small:
         maxlen=config["tesmall"]["maxlen"],
         maxaln=config["tesmall"]["maxaln"],
         mismatch=config["tesmall"]["mismatch"],
-    threads: 8
+    threads: 4
     log:
         "logs/te_small/{sample}.log",
     conda:
