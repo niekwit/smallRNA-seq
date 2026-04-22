@@ -24,6 +24,7 @@ containerized: "docker://niekwit/smallrna-seq:v0.1"
 
 GENOME = config["genome"]
 SAMPLES = samples()
+NCRNA_URL = ensembl_ncrna_url(config)
 
 # Only use a leader sample when the TEsmall genome database does not yet exist
 _tesmall_genome_db = os.path.join(config["tesmall"]["dbfolder"], "genomes", GENOME)
