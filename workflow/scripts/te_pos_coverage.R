@@ -97,7 +97,7 @@ p <- ggplot(
   labs(
     title = te,
     x = "Position (bp)",
-    y = "Normalised read count (%)",
+    y = "Normalised read count (x100)",
     colour = "Strand"
   ) +
   theme_cowplot(12) +
