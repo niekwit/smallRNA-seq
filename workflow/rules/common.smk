@@ -93,10 +93,7 @@ def ensembl_ncrna_url(config):
 
     species, assembly, species_cap = genome_map[genome]
     filename = f"{species_cap}.{assembly}.ncrna.fa.gz"
-    return (
-        f"https://ftp.ensembl.org/pub/release-{release}"
-        f"/fasta/{species}/ncrna/{filename}"
-    )
+    return f"https://ftp.ensembl.org/pub/release-{release}/fasta/{species}/ncrna/{filename}"
 
 
 def plot_length_distribution_input(wildcards):
