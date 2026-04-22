@@ -65,12 +65,12 @@ rule bowtie_index_ncrna:
 rule filter_ncrna_reads:
     input:
         fasta="results/fasta/{sample}.collapsed.fasta",
-        index=expand(f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT),
+        index_files=expand(f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT),
     output:
         fasta="results/fasta/{sample}.ncrna_filtered.fasta",
         bam="results/ncrna_filter/{sample}.bam",
     params:
-        index_prefix=lambda wildcards, output: output.index_files[0].replace(
+        index_prefix=lambda wildcards, input: input.index_files[0].replace(
             ".1.ebwt", ""
         ),
     threads: 4
