@@ -44,11 +44,11 @@ rule bowtie_index_ncrna:
     input:
         fa=f"resources/ncrna/{GENOME}.excluded_ncrna.fa",
     output:
-        index_files=expand(
-            f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT
-        ),
+        index_files=expand(f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT),
     params:
-        index_prefix=f"resources/bowtie1_index/ncrna_{GENOME}",
+        index_prefix=lambda wildcards, output: output.index_files[0].replace(
+            ".1.ebwt", ""
+        ),
     threads: 1
     log:
         f"logs/ncrna/bowtie_index.log",
@@ -65,14 +65,14 @@ rule bowtie_index_ncrna:
 rule filter_ncrna_reads:
     input:
         fasta="results/fasta/{sample}.collapsed.fasta",
-        index=expand(
-            f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT
-        ),
+        index=expand(f"resources/bowtie1_index/ncrna_{GENOME}.{{ext}}", ext=EXT),
     output:
         fasta="results/fasta/{sample}.ncrna_filtered.fasta",
         bam="results/ncrna_filter/{sample}.bam",
     params:
-        index_prefix=f"resources/bowtie1_index/ncrna_{GENOME}",
+        index_prefix=lambda wildcards, output: output.index_files[0].replace(
+            ".1.ebwt", ""
+        ),
     threads: 4
     log:
         "logs/ncrna/{sample}_filter_reads.log",
