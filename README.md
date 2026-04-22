@@ -62,6 +62,7 @@ The analysis settings are defined in `config/config.yaml`:
 
 ```yaml
 genome: mm39 # hg38 or mm39
+release: 115
 
 samples:
   # sample: condition
