@@ -17,7 +17,7 @@ rule install_te_small:
         "{params.version} "
         "{output}; "
         "cd {output}; "
-        "python setup.py install"
+        "pip install --no-deps --prefix=. ."
 
 
 # Run TEsmall analysis
