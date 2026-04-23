@@ -84,9 +84,7 @@ rule plot_pca:
 # --------------------------------------------------------
 rule te_small_piechart:
     input:
-        rlen=expand(
-            "results/te_small/{sample}/{sample}.anno.rlen.info", sample=SAMPLES
-        ),
+        rlen=expand("results/te_small/{sample}/{sample}.anno.rlen.info", sample=SAMPLES),
     output:
         pdf="results/plots/te_small/piechart.pdf",
         csv="results/plots/te_small/piechart.csv",
@@ -102,9 +100,7 @@ rule te_small_piechart:
 # --------------------------------------------------------
 rule te_small_bargraph:
     input:
-        rlen=expand(
-            "results/te_small/{sample}/{sample}.anno.rlen.info", sample=SAMPLES
-        ),
+        rlen=expand("results/te_small/{sample}/{sample}.anno.rlen.info", sample=SAMPLES),
     output:
         pdf="results/plots/te_small/bargraph.pdf",
     params:
