@@ -83,6 +83,11 @@ if config["tesmall"]["run_tesmall"]:
                 "results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS
             ),
             expand("results/plots/{comparison}/results.csv", comparison=COMPARISONS),
+            "results/plots/te_small/piechart.pdf",
+            "results/plots/te_small/piechart.csv",
+            "results/plots/te_small/bargraph.pdf",
+            "results/plots/te_small/stacked_bar_te.pdf",
+            "results/plots/te_small/stacked_bar_te.csv",
         ]
     )
 

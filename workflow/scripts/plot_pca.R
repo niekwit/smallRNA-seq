@@ -11,8 +11,25 @@ library(DESeq2)
 # Load dds
 load(snakemake@input[["rds"]])
 
-# Transform counts for PCA
-vsd <- vst(dds, blind = FALSE)
+# Extracting transformed values
+# Extracting transformed values
+if (nrow(dds) < 1000) {
+  print("Fewer than 1000 features. Using VST directly.")
+  vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+} else {
+  # Try-catch to handle the 'nsub' error if data is sparse
+  vsd <- tryCatch(
+    {
+      vst(dds, blind = FALSE)
+    },
+    error = function(e) {
+      print(
+        "vst failed due to low row counts, falling back to varianceStabilizingTransformation"
+      )
+      varianceStabilizingTransformation(dds, blind = FALSE)
+    }
+  )
+}
 
 # Set colours for plotting
 vsd_df <- as.data.frame(colData(vsd))
@@ -35,10 +52,7 @@ p <- DESeq2::plotPCA(vsd, intgroup = "condition") +
   ) +
   theme_cowplot(12) +
   scale_color_manual(
-    values = c(
-      "Morc2a_WT" = "#cccccc",
-      "Morc2a_KO" = "#dd3b3b"
-    )
+    values = colours
   )
 
 # Save PCA plot to file
