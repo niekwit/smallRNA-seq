@@ -11,8 +11,12 @@ library(DESeq2)
 # Load dds
 load(snakemake@input[["rds"]])
 
-# Transform counts for PCA
-vsd <- vst(dds, blind = FALSE)
+# Extracting transformed values
+if (length(dds) > 1000) {
+  vsd <- vst(dds, blind = FALSE)
+} else {
+  vsd <- varianceStabilizingTransformation(dds, blind = FALSE, fitType = "mean")
+}
 
 # Set colours for plotting
 vsd_df <- as.data.frame(colData(vsd))
