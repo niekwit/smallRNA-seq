@@ -14,8 +14,8 @@ cutadapt:
   extra: "-m 16 --trimmed-only -q 20"
 
 tesmall:
-  run_tesmall: False
-  dbfolder: /mnt/4TB_SSD/TEsmall_db/
+  run_tesmall: True
+  dbfolder: /tmp/TEsmall_db/
   minlen: 16
   maxlen: 36
   maxaln: 100
@@ -23,7 +23,7 @@ tesmall:
   extra_args: ""
 
 length_distribution:
-  apply_mirna_correction: TRUE
+  apply_mirna_correction: FALSE
   mirna_correction_method: length # length or align
 
   # miRNA length range for correction
