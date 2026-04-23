@@ -19,7 +19,7 @@ min_version("8.25.5")
 
 
 # Define Docker container
-containerized: "docker://niekwit/smallrna-seq:v0.1"
+containerized: "docker://niekwit/smallrna-seq:v0.2.0"
 
 
 GENOME = config["genome"]

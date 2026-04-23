@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="bda57b6807c8922f85694577648e31c83b0ae0ace36d94f7f74c83c56e67c514"
+LABEL io.github.snakemake.conda_env_hash="5653f77d8ab9ccc13be73ce830bfd375560d5d4c3031302e41e4adc628b9f8db"
 
 # Step 2: Retrieve conda environments
 
@@ -18,7 +18,7 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v7.9.0/bio/cutadapt/se/e
 
 # Conda environment:
 #   source: workflow/envs/R.yaml
-#   prefix: /conda-envs/971e30874532c7c91e6494d19e958a88
+#   prefix: /conda-envs/e062178e25f5489b3f3c7d8bd8a37b69
 #   name: R
 #   channels:
 #     - conda-forge
@@ -33,12 +33,13 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v7.9.0/bio/cutadapt/se/e
 #     - bioconda::bioconductor-biostrings=2.74.0
 #     - bioconda::bioconductor-rsamtools=2.22.0
 #     - conda-forge::r-gridextra=2.3
-RUN mkdir -p /conda-envs/971e30874532c7c91e6494d19e958a88
-COPY workflow/envs/R.yaml /conda-envs/971e30874532c7c91e6494d19e958a88/environment.yaml
+#     - conda-forge::r-ggrepel=0.9.6
+RUN mkdir -p /conda-envs/e062178e25f5489b3f3c7d8bd8a37b69
+COPY workflow/envs/R.yaml /conda-envs/e062178e25f5489b3f3c7d8bd8a37b69/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/pingpong.yaml
-#   prefix: /conda-envs/c3303e4aa2c782fab6f9a32338f36644
+#   prefix: /conda-envs/03d5424c620255c2c4b5db4e7d3a747f
 #   name: pingpong
 #   channels:
 #     - conda-forge
@@ -51,8 +52,10 @@ COPY workflow/envs/R.yaml /conda-envs/971e30874532c7c91e6494d19e958a88/environme
 #     - bioconda::pysam=0.23.3
 #     - bioconda::samtools=1.22.1
 #     - bioconda::seqtk=1.5
-RUN mkdir -p /conda-envs/c3303e4aa2c782fab6f9a32338f36644
-COPY workflow/envs/pingpong.yaml /conda-envs/c3303e4aa2c782fab6f9a32338f36644/environment.yaml
+#     - bioconda::seqkit=2.13.0
+#     - conda-forge::wget=1.25.0
+RUN mkdir -p /conda-envs/03d5424c620255c2c4b5db4e7d3a747f
+COPY workflow/envs/pingpong.yaml /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/process_reads.yaml
@@ -69,10 +72,35 @@ COPY workflow/envs/pingpong.yaml /conda-envs/c3303e4aa2c782fab6f9a32338f36644/en
 RUN mkdir -p /conda-envs/01ea981e63e66e6a34e85f55e825d6be
 COPY workflow/envs/process_reads.yaml /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml
 
+# Conda environment:
+#   source: workflow/envs/te_small.yaml
+#   prefix: /conda-envs/4de7c277f2d993743fca85b54cdc9afd
+#   name: te_small
+#   channels:
+#     - conda-forge
+#     - bioconda
+#     - nodefaults
+#   dependencies:
+#     - numpy>=1.11.3
+#     - scipy>=0.18.0
+#     - pandas>=0.18.1
+#     - matplotlib>=1.5.1
+#     - seaborn>=0.7.1
+#     - bokeh>=1.0.0
+#     - pysam>=0.9.1
+#     - pybedtools>=0.7.8
+#     - cutadapt>=1.10
+#     - git
+#     - bioconda::samtools=1.22.1
+#     - bioconda::bowtie=1.3.1
+RUN mkdir -p /conda-envs/4de7c277f2d993743fca85b54cdc9afd
+COPY workflow/envs/te_small.yaml /conda-envs/4de7c277f2d993743fca85b54cdc9afd/environment.yaml
+
 # Step 3: Generate conda environments
 
 RUN conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --file /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32/environment.yaml && \
-    conda env create --prefix /conda-envs/971e30874532c7c91e6494d19e958a88 --file /conda-envs/971e30874532c7c91e6494d19e958a88/environment.yaml && \
-    conda env create --prefix /conda-envs/c3303e4aa2c782fab6f9a32338f36644 --file /conda-envs/c3303e4aa2c782fab6f9a32338f36644/environment.yaml && \
+    conda env create --prefix /conda-envs/e062178e25f5489b3f3c7d8bd8a37b69 --file /conda-envs/e062178e25f5489b3f3c7d8bd8a37b69/environment.yaml && \
+    conda env create --prefix /conda-envs/03d5424c620255c2c4b5db4e7d3a747f --file /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/environment.yaml && \
     conda env create --prefix /conda-envs/01ea981e63e66e6a34e85f55e825d6be --file /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml && \
+    conda env create --prefix /conda-envs/4de7c277f2d993743fca85b54cdc9afd --file /conda-envs/4de7c277f2d993743fca85b54cdc9afd/environment.yaml && \
     conda clean --all -y
