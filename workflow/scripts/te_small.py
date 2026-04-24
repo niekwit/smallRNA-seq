@@ -11,7 +11,11 @@ current_dir = os.getcwd()
 _te_small_dir = os.path.join(current_dir, "resources/te_small")
 _te_small_bin = os.path.join(_te_small_dir, "bin")
 _site_pkgs = glob.glob(os.path.join(_te_small_dir, "lib", "python*", "site-packages"))
-_pythonpath = ":".join(filter(None, [_site_pkgs[0] if _site_pkgs else "", os.environ.get("PYTHONPATH", "")]))
+_pythonpath = ":".join(
+    filter(
+        None, [_site_pkgs[0] if _site_pkgs else "", os.environ.get("PYTHONPATH", "")]
+    )
+)
 
 count_file = os.path.join(current_dir, snakemake.output["txt"])
 report = os.path.join(current_dir, snakemake.output["report"])
