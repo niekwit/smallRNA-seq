@@ -1,20 +1,17 @@
 import glob
 import os
-import sys
 
 from snakemake.shell import shell
 
 # Get current directory to return later
 current_dir = os.getcwd()
 
-# TEsmall is installed locally (pip install --prefix) inside resources/te_small/
-# so that the conda env stays read-only (required for --use-apptainer)
+# TEsmall is installed with pip install --no-deps --prefix into resources/te_small/
+# so the conda env stays read-only (required for --use-apptainer)
 _te_small_dir = os.path.join(current_dir, "resources/te_small")
-os.environ["PATH"] = os.path.join(_te_small_dir, "bin") + os.pathsep + os.environ.get("PATH", "")
+_te_small_bin = os.path.join(_te_small_dir, "bin")
 _site_pkgs = glob.glob(os.path.join(_te_small_dir, "lib", "python*", "site-packages"))
-if _site_pkgs:
-    sys.path.insert(0, _site_pkgs[0])
-    os.environ["PYTHONPATH"] = _site_pkgs[0] + os.pathsep + os.environ.get("PYTHONPATH", "")
+_pythonpath = ":".join(filter(None, [_site_pkgs[0] if _site_pkgs else "", os.environ.get("PYTHONPATH", "")]))
 
 count_file = os.path.join(current_dir, snakemake.output["txt"])
 report = os.path.join(current_dir, snakemake.output["report"])
@@ -31,6 +28,8 @@ os.chdir(fastq_dir)
 print(f"Running TEsmall for sample:", snakemake.wildcards["sample"])
 
 shell(
+    f"export PATH={_te_small_bin}:$PATH; "
+    f"export PYTHONPATH={_pythonpath}; "
     f"TEsmall -a {snakemake.params.adapter} "
     f"--minlen {snakemake.params.minlen} "
     f"--maxlen {snakemake.params.maxlen} "
