@@ -106,7 +106,7 @@ The FASTA file under config[pingpong][fasta] should contain the TE sequences of 
   <summary>Example TE fasta file</summary>
 
 ```fasta
->L1MdTf_III	L1	Mus musculus
+>L1MdTf_III
 agcagcagcggtcgccatctkggttccgggactccgcgggacctaggaaattagtctgaa
 caggttagagggtgcgccagagaaccggacagcttctgggacgggcggaagcacagagcc
 gctgaggcagcacccttggcgggccgcagacagccggccaccatccggaccagaggacag
@@ -219,7 +219,7 @@ ctagtcggccatcactggaaagagaggcccattggacacacaaactttatatgccccaga
 acaggggaacgccagggccaaaaagggggagtgggcgggtaggggagtgggggtgggtgg
 gtatgggggacttttggtatagcattggaaatgtaaatgagctaaatacctaataaaaaa
 tggaaagaaa
->L1MdTf_I	L1	Mus musculus
+>L1MdTf_I
 caggcggaagcgcggaggcgctgaggcagcaccctgcgtgggccggggacagccggccac
 cttccggaccagaggacaggtgcccgcccggctggggaggcgrcctaagccacagcagca
 gcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggtgaga
@@ -344,7 +344,7 @@ aagatggcctagtcggccatcactggaaagagaggcccattggacacgcagactttgtgt
 gccccggtacaggggaacgccagggccaaagggggggagtgggtgggtaggggagtgggg
 gtgggtgggtaagggggacttttggtatagcattggaaatgtaaatgagctaaataccta
 ataaaaaatggaaaaaaa
->L1MdTf_II	L1	Mus musculus
+>L1MdTf_II
 gaggacaggtgcccgcccggctggggaggcgrcctaagccacagcagcagcggtcgccat
 cttggtccgggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccag
 agaacctgacagcttctggaacaggcggaagcacagaggcgctgaggcagcaccctgtgt
@@ -545,7 +545,7 @@ results/
 
 If you find this workflow useful, please consider citing it:
 
-> Niek Wit. (2026). niekwit/smallRNA-seq: v0.1 (v0.1). Zenodo. https://doi.org/10.5281/zenodo.19258359
+> Niek Wit. (2026). niekwit/smallRNA-seq: v0.2.1 (v0.2.1). Zenodo. https://doi.org/10.5281/zenodo.19728900
 
 ## References
 
