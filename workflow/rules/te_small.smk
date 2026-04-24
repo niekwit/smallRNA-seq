@@ -17,7 +17,7 @@ rule install_te_small:
         "{params.version} "
         "{output}; "
         "cd {output}; "
-        "if [ -n \"${{APPTAINER_CONTAINER:-}}${{SINGULARITY_CONTAINER:-}}\" ]; then "
+        'if [ -n "${{APPTAINER_CONTAINER:-}}${{SINGULARITY_CONTAINER:-}}" ]; then '
         "pip install --no-deps --no-build-isolation --prefix=. .; "
         "else "
         "pip install --no-deps .; "
