@@ -17,7 +17,11 @@ rule install_te_small:
         "{params.version} "
         "{output}; "
         "cd {output}; "
-        "pip install --no-deps --prefix=. ."
+        "if [ -n \"${{APPTAINER_CONTAINER:-}}${{SINGULARITY_CONTAINER:-}}\" ]; then "
+        "pip install --no-deps --no-build-isolation --prefix=. .; "
+        "else "
+        "pip install --no-deps .; "
+        "fi"
 
 
 # Run TEsmall analysis
