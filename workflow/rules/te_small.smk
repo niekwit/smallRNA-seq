@@ -1,32 +1,6 @@
-# Install TEsmall software from GitHub
-# --------------------------------------------------------
-rule install_te_small:
-    output:
-        directory("resources/te_small/"),
-    params:
-        url="https://github.com/mhammell-laboratory/TEsmall.git",
-        version="-b 2.0.9",
-    retries: 3
-    log:
-        "logs/install_te_small.log",
-    conda:
-        "../envs/te_small.yaml"
-    shell:
-        "git clone "
-        "{params.url} "
-        "{params.version} "
-        "{output}; "
-        "cd {output}; "
-        'if [ -n "${{APPTAINER_CONTAINER:-}}${{SINGULARITY_CONTAINER:-}}" ]; then '
-        "pip install --no-deps --no-build-isolation --prefix=. .; "
-        "else "
-        "pip install --no-deps .; "
-        "fi"
-
-
 # Run TEsmall analysis
 # --------------------------------------------------------
-rule run_te_small:
+rule te_small:
     input:
         unpack(get_dependencies),
     output:

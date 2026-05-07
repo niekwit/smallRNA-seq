@@ -1,5 +1,7 @@
 from snakemake.utils import min_version
 
+VERSION = "v0.2.2"
+
 # Based on:
 # https://github.com/rberrens/SPOCD1-piRNA_directed_DNA_met/tree/master/piRNA_analysis
 
@@ -19,7 +21,7 @@ min_version("8.25.5")
 
 
 # Define Docker container
-containerized: "docker://niekwit/smallrna-seq:v0.2.0"
+containerized: "docker://niekwit/smallrna-seq:v0.2.2"
 
 
 GENOME = config["genome"]

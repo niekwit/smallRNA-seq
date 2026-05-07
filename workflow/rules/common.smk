@@ -21,9 +21,10 @@ def samples():
 
 
 def get_dependencies(wildcards):
+    """Input function for TEsmall rule"""
+
     inputs = {
         "fastq": f"reads/{wildcards.sample}/{wildcards.sample}.fastq.gz",
-        "log": "logs/install_te_small.log",
     }
 
     # When the genome database does not yet exist, LEADER_SAMPLE is set to the
