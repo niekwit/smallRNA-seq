@@ -81,9 +81,12 @@ def compute_ping_pong(bam_path, window=30):
                  sense     -> position 10 nucleotide of the sense read
                  antisense -> position 1 nucleotide of the antisense read
     """
+    # Lookup table for reverse-complementing a single base.
+    RC = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
+
     # data structure: te_list[repeat_id]["F" or "R"][five_p] = [(count, nt), ...]
-    # F reads store the nucleotide at position 10 (index 9) of the sense read.
-    # R reads store the nucleotide at position 1 (index 0) of the antisense read.
+    # F (sense) reads store the nucleotide at position 10 of the read (10A bias).
+    # R (antisense) reads store the nucleotide at position 1 of the read (1U bias).
     te_list = defaultdict(lambda: {"F": defaultdict(list), "R": defaultdict(list)})
 
     for read in load_reads(bam_path):
@@ -92,12 +95,18 @@ def compute_ping_pong(bam_path, window=30):
         seq = read.query_sequence or ""
 
         if read_is_sense(read):
+            # Sense (+ strand) read: SEQ is stored 5'→3', so seq[9] is
+            # directly position 10 of the piRNA (10A bias).
             five_p = read.reference_start
-            nt = seq[9] if len(seq) >= 10 else None  # position 10
+            nt = seq[9] if len(seq) >= 10 else None
             te_list[te_id]["F"][five_p].append((count, nt))
         else:
+            # Antisense (- strand) read: BAM stores SEQ as the reverse
+            # complement of the original read, so seq[0] is the complement
+            # of the 3' end — NOT position 1. Position 1 (5' end) of the
+            # original piRNA is encoded as complement(seq[-1]).
             five_p = read.reference_start + read.query_length
-            nt = seq[0] if seq else None  # position 1
+            nt = RC.get(seq[-1]) if seq else None
             te_list[te_id]["R"][five_p].append((count, nt))
 
     # Compute distances
