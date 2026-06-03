@@ -106,17 +106,24 @@ if (length(conditions) == 2) {
   colours <- RColorBrewer::brewer.pal(n = length(conditions), name = "Set3")
 }
 
-# Create line plot with error bars
-p <- ggplot(df, aes(x = length, y = .data[[y_value]], color = condition)) +
-  geom_line(aes(group = sample)) +
-  geom_point() +
+# Create bar plot with error bars
+p <- ggplot(
+  df,
+  aes(x = factor(length), y = .data[[y_value]], fill = condition)
+) +
+  geom_bar(
+    stat = "identity",
+    position = position_dodge(width = 0.9),
+    color = "black"
+  ) +
   geom_errorbar(
     aes(
       ymin = .data[[y_value]] - .data[[y_sd]],
       ymax = .data[[y_value]] + .data[[y_sd]]
     ),
     width = 0.2,
-    color = "black"
+    color = "black",
+    position = position_dodge(width = 0.9)
   ) +
   labs(
     x = "Length (nt)",
@@ -124,11 +131,8 @@ p <- ggplot(df, aes(x = length, y = .data[[y_value]], color = condition)) +
   ) +
   theme_cowplot() +
   theme(legend.position = "bottom") +
-  scale_x_continuous(
-    breaks = seq(18, 34, by = 2),
-    guide = guide_axis(minor.ticks = TRUE)
-  ) +
-  scale_color_manual(values = colours)
+  scale_fill_manual(values = colours) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)))
 
 # Save plot
 ggsave(filename = snakemake@output[["pdf"]], plot = p, width = 6, height = 4)
