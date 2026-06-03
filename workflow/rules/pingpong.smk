@@ -181,7 +181,8 @@ rule remove_mirna_reads:
         "--al {output.mirna} "
         "{input.fasta} 2> {log} | "
         "samtools view -F 4 -bS - | "
-        "samtools sort -o {output.mirna_bam}"
+        "samtools sort -o {output.mirna_bam} && "
+        "touch {output.mirna}" # create empty file if no miRNA reads are found
 
 
 # Build bowtie1 index for ping-pong analysis
