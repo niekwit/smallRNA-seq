@@ -13,6 +13,7 @@ maxlen <- snakemake@params[["maxlen"]]
 
 sample_to_condition <- setNames(unlist(all_samples), names(all_samples))
 
+# Read and combine all read length distribution files
 df <- lapply(rlen_files, function(f) {
   sample_name <- basename(dirname(f))
   read_delim(f, show_col_types = FALSE) |>
@@ -28,6 +29,7 @@ df <- lapply(rlen_files, function(f) {
     values_to = "count"
   )
 
+# Summarise counts by condition, feature, and read length, then calculate percentages
 df_summary <- df %>%
   group_by(condition, feature, rlen) %>%
   summarise(total_count = sum(count), .groups = "drop") %>%
@@ -36,10 +38,38 @@ df_summary <- df %>%
   ungroup() %>%
   filter(rlen >= minlen & rlen <= maxlen)
 
+# Set factor levels for conditions, with reference condition first
 other_conditions <- setdiff(unique(df_summary$condition), reference_condition)
 df_summary$condition <- factor(
   df_summary$condition,
   levels = c(reference_condition, other_conditions)
+)
+
+# Set factor levels for feature
+df_summary$feature <- factor(
+  df_summary$feature,
+  levels = c(
+    "exon",
+    "intron",
+    "hairpin",
+    "miRNA",
+    "structural_RNA",
+    "piRNA_cluster",
+    "anti_TE",
+    "sense_TE"
+  )
+)
+
+# Define custom colors for features
+colours <- c(
+  "exon" = "#8DD3C7",
+  "intron" = "#FFFFB3",
+  "hairpin" = "#BEBADA",
+  "miRNA" = "#FB8072",
+  "structural_RNA" = "#B3DE69",
+  "piRNA_cluster" = "#FDB462",
+  "sense_TE" = "#5297c9",
+  "anti_TE" = "#80B1D3"
 )
 
 p <- ggplot(
@@ -66,7 +96,7 @@ p <- ggplot(
     legend.title = element_text(size = 14),
     legend.text = element_text(size = 14)
   ) +
-  scale_fill_brewer(palette = "Set3") +
+  scale_fill_manual(values = colours) +
   scale_y_continuous(expand = c(0, 0)) +
   scale_x_continuous(
     breaks = seq(minlen, maxlen, by = 2),
