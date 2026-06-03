@@ -40,7 +40,6 @@ MIRBASE_GENOME = mirbase_genome(config)
 include: "rules/length_distribution.smk"
 include: "rules/te_small.smk"
 include: "rules/pingpong.smk"
-include: "rules/mirna_correction.smk"
 
 
 onstart:
