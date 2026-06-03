@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="ec2ebada5c43334b1bb1ba51a0e71ff958c473009f4d8c27304c2eee3fca56e6"
+LABEL io.github.snakemake.conda_env_hash="e2aea5f84973d3f5092fe41f7b153fb52ff40505d934fc38da9ea7b4cac9ebe1"
 
 # Step 2: Retrieve conda environments
 
@@ -71,24 +71,10 @@ COPY workflow/envs/pingpong.yaml /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/en
 RUN mkdir -p /conda-envs/01ea981e63e66e6a34e85f55e825d6be
 COPY workflow/envs/process_reads.yaml /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml
 
-# Conda environment:
-#   source: workflow/envs/te_small.yaml
-#   prefix: /conda-envs/601a390285cf905b130f31f8ddea6719
-#   name: te_small
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - nodefaults
-#   dependencies:
-#     - bioconda::tesmall=2.0.9
-RUN mkdir -p /conda-envs/601a390285cf905b130f31f8ddea6719
-COPY workflow/envs/te_small.yaml /conda-envs/601a390285cf905b130f31f8ddea6719/environment.yaml
-
 # Step 3: Generate conda environments
 
 RUN conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --file /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32/environment.yaml && \
     conda env create --prefix /conda-envs/971e30874532c7c91e6494d19e958a88 --file /conda-envs/971e30874532c7c91e6494d19e958a88/environment.yaml && \
     conda env create --prefix /conda-envs/03d5424c620255c2c4b5db4e7d3a747f --file /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/environment.yaml && \
     conda env create --prefix /conda-envs/01ea981e63e66e6a34e85f55e825d6be --file /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml && \
-    conda env create --prefix /conda-envs/601a390285cf905b130f31f8ddea6719 --file /conda-envs/601a390285cf905b130f31f8ddea6719/environment.yaml && \
     conda clean --all -y
