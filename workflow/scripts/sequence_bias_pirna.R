@@ -33,68 +33,98 @@ for (condition in c(reference_condition, test_condition)) {
       0
   ]
 
-  all_seqs <- c()
+  all_sense_seqs <- c()
+  all_antisense_seqs <- c()
 
   for (bam in condition_bam_files) {
-    # Load BAM file
     bam_data <- BamFile(bam)
-
-    # Get the sequences from the BAM file as named character vectors
     data <- scanBam(bam_data)[[1]]
 
-    seqs <- as.character(data$seq)
-    names(seqs) <- as.character(data$rname)
+    # Identify reads mapping to the specified TE and extract all fields
+    # together so indices stay in sync through all filtering steps.
+    te_idx <- which(as.character(data$rname) == te)
+    seqs <- as.character(data$seq[te_idx])
+    strands <- as.character(data$strand[te_idx])
+    seq_names <- as.character(data$qname[te_idx])
 
-    # Keep only sequences that map to the specified TE
-    seqs <- seqs[names(seqs) == te]
+    # Keep only piRNA-length reads (24-32 nt)
+    len_ok <- nchar(seqs) >= 24 & nchar(seqs) <= 32
+    seqs <- seqs[len_ok]
+    strands <- strands[len_ok]
+    seq_names <- seq_names[len_ok]
 
-    # Remove sequences that are not 24-32 nt long
-    seqs <- seqs[nchar(seqs) >= 24 & nchar(seqs) <= 32]
+    # Remove reads containing Ns
+    no_n <- !grepl("N", seqs)
+    seqs <- seqs[no_n]
+    strands <- strands[no_n]
+    seq_names <- seq_names[no_n]
 
-    # Remove sequences that contain any number of Ns
-    seqs <- seqs[!grepl("N", seqs)]
+    # BAM stores minus-strand reads as the reverse complement of the
+    # original piRNA (same issue as the Python ping-pong script). RC
+    # them back so all sequences run 5'->3' in their original orientation,
+    # ensuring position 1 carries U and position 10 carries A.
+    minus_idx <- which(strands == "-")
+    if (length(minus_idx) > 0) {
+      seqs[minus_idx] <- as.character(
+        reverseComplement(DNAStringSet(seqs[minus_idx]))
+      )
+    }
 
-    # Trim sequences to 10 nt
+    # Trim to first 10 nt and convert T->U for RNA representation
     seqs <- substr(seqs, 1, 10)
-
-    # Convert T to U for RNA representation
     seqs <- str_replace_all(seqs, "T", "U")
 
-    # Get the names of all sequences
-    # As sequences were collapsed in the BAM, we need to replicate
-    # each sequence according to its count
-    seq_names <- data$qname[which(names(seqs) == te)]
-
-    # Sequence names are in the format: seqname-count
+    # Replicate each sequence by its original read count, encoded in
+    # the collapsed FASTA qname as "readname-count". Split by strand
+    # before replication so sense and antisense stay separate.
     counts <- as.integer(str_split_fixed(seq_names, "-", 2)[, 2])
 
-    # Replicate sequences according to their counts
-    seqs <- rep(seqs, times = counts)
+    sense_mask <- strands == "+"
+    antisense_mask <- strands == "-"
 
-    all_seqs <- c(all_seqs, seqs)
+    all_sense_seqs <- c(
+      all_sense_seqs,
+      rep(seqs[sense_mask], times = counts[sense_mask])
+    )
+    all_antisense_seqs <- c(
+      all_antisense_seqs,
+      rep(seqs[antisense_mask], times = counts[antisense_mask])
+    )
   }
-  sequence_lists[[condition]] <- all_seqs
+  sequence_lists[[condition]] <- list(
+    sense = all_sense_seqs,
+    antisense = all_antisense_seqs
+  )
 }
 
-# Generate sequence logos
-p1 <- ggseqlogo(
-  sequence_lists[[reference_condition]],
-  method = "bits",
-  seq_type = "rna"
-)
+# Generate sequence logos: 2 conditions x 2 strands = 4 plots arranged
+# in a 2x2 grid (columns = conditions, rows = sense / antisense).
+make_logo <- function(seqs, title) {
+  ggseqlogo(seqs, method = "bits", seq_type = "rna") +
+    ggtitle(title)
+}
 
-p2 <- ggseqlogo(
-  sequence_lists[[test_condition]],
-  method = "bits",
-  seq_type = "rna"
+logo_plots <- list(
+  make_logo(
+    sequence_lists[[reference_condition]]$sense,
+    paste0(reference_condition, "\nsense")
+  ),
+  make_logo(
+    sequence_lists[[test_condition]]$sense,
+    paste0(test_condition, "\nsense")
+  ),
+  make_logo(
+    sequence_lists[[reference_condition]]$antisense,
+    paste0(reference_condition, "\nantisense")
+  ),
+  make_logo(
+    sequence_lists[[test_condition]]$antisense,
+    paste0(test_condition, "\nantisense")
+  )
 )
 
 pdf(file = snakemake@output[["logo"]])
-gridExtra::grid.arrange(
-  p1 + ggtitle(reference_condition),
-  p2 + ggtitle(test_condition),
-  ncol = 1
-)
+gridExtra::grid.arrange(grobs = logo_plots, ncol = 2)
 dev.off()
 
 # Build a sample -> condition lookup from config
