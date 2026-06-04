@@ -31,13 +31,14 @@ names(bam_files) <- conditions
 
 # Helper: read relevant BAM fields for a single file ---
 read_bam <- function(bam_path) {
-  param <- ScanBamParam(what = c("qname", "flag", "rname", "pos"))
+  param <- ScanBamParam(what = c("qname", "flag", "rname", "pos", "qwidth"))
   bam <- scanBam(bam_path, param = param)[[1]]
   data.frame(
     qname = bam$qname,
     flag = bam$flag,
     rname = as.character(bam$rname),
     pos = bam$pos,
+    qwidth = bam$qwidth,
     stringsAsFactors = FALSE
   )
 }
@@ -70,8 +71,16 @@ reads$count <- parse_count(reads$qname)
 reads <- reads[!is.na(reads$count) & !is.na(reads$pos), ]
 reads$strand <- ifelse(reads$flag == 0L, "forward", "reverse")
 
+# For reverse-strand reads, BAM pos is the leftmost (3') coordinate.
+# The 5' end is pos + read_length - 1.
+reads$five_p <- ifelse(
+  reads$flag == 16L,
+  reads$pos + reads$qwidth - 1,
+  reads$pos
+)
+
 agg <- reads %>%
-  group_by(condition, strand, pos) %>%
+  group_by(condition, strand, five_p) %>%
   summarise(raw = sum(count), .groups = "drop") %>%
   group_by(condition, strand) %>%
   mutate(norm = raw / sum(raw) * 100) %>%
@@ -83,7 +92,7 @@ agg <- reads %>%
 
 p <- ggplot(
   agg,
-  aes(x = pos, xend = pos, y = 0, yend = norm, colour = strand)
+  aes(x = five_p, xend = five_p, y = 0, yend = norm, colour = strand)
 ) +
   geom_segment(linewidth = 0.4) +
   geom_hline(yintercept = 0, colour = "grey60") +
