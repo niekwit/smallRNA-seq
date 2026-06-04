@@ -3,6 +3,7 @@ import re
 import sys
 import pandas as pd
 from snakemake.utils import validate
+from snakemake.logging import logger
 
 
 # validate config file
@@ -93,6 +94,31 @@ def ensembl_ncrna_url(config):
     species, assembly, species_cap = genome_map[genome]
     filename = f"{species_cap}.{assembly}.ncrna.fa.gz"
     return f"https://ftp.ensembl.org/pub/release-{release}/fasta/{species}/ncrna/{filename}"
+
+
+def check_mirna_correction_settings(config):
+    if not config["length_distribution"]["apply_mirna_correction"]:
+        return
+
+    # Extract -m INT from cutadapt extra arguments
+    cutadapt_extra = config["cutadapt"].get("extra", "")
+    m = re.search(r"-m\s+(\d+)", cutadapt_extra)
+    if m and int(m.group(1)) > 24:
+        logger.warning(
+            f"cutadapt -m is set to {m.group(1)}, which will discard reads "
+            "shorter than this length. miRNAs are typically ≤24 nt, so miRNA-based "
+            "correction may be inaccurate. Consider setting -m to 16 or lower."
+        )
+
+    # Check tesmall minlen when TEsmall is enabled
+    if config["length_distribution"]["mirna_correction_method"] == "align":
+        minlen = config["tesmall"]["minlen"]
+        if minlen > 24:
+            logger.warning(
+                f"tesmall minlen is set to {minlen}, which excludes reads "
+                "shorter than this length. miRNAs are typically ≤24 nt, so miRNA-based "
+                "correction may be inaccurate. Consider setting minlen to 16 or lower."
+            )
 
 
 def plot_length_distribution_input(wildcards):
