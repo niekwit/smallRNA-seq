@@ -66,11 +66,11 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
       group_by(sample) %>%
       mutate(rpm_mirna = count / mirna_total * 1e6) %>%
       group_by(condition, length) %>%
-      mutate(
+      summarise(
         rpm_mirna_avg = mean(rpm_mirna),
-        rpm_mirna_sd = sd(rpm_mirna)
-      ) %>%
-      ungroup()
+        rpm_mirna_sd = sd(rpm_mirna),
+        .groups = "drop"
+      )
 
     y_value <- "rpm_mirna_avg"
     y_sd <- "rpm_mirna_sd"
@@ -86,15 +86,15 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
     df <- df %>%
       group_by(sample) %>%
       mutate(
-        mirna_sum = sum(count[length >= mirna_min & length <= mirna_max])
+        mirna_sum = sum(count[length >= mirna_min & length <= mirna_max]),
+        mi_norm_frequency = count / mirna_sum
       ) %>%
-      mutate(mi_norm_frequency = count / mirna_sum) %>%
       group_by(condition, length) %>%
-      mutate(
+      summarise(
         mi_norm_condition_avg = mean(mi_norm_frequency),
-        mi_norm_sd = sd(mi_norm_frequency)
-      ) %>%
-      ungroup()
+        mi_norm_sd = sd(mi_norm_frequency),
+        .groups = "drop"
+      )
 
     y_value <- "mi_norm_condition_avg"
     y_sd <- "mi_norm_sd"
@@ -103,20 +103,17 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
 } else {
   print("No miRNA-based normalization applied")
   df <- df %>%
-    # Sum of counts per sample
     group_by(sample) %>%
-    mutate(sample_sum = sum(count)) %>%
-    # Calculate frequency and SD for each condition and length
-    group_by(length) %>%
-    mutate(sample_frequency = count / sample_sum) %>%
-    ungroup() %>%
-    # Calculate SD per length across samples of the same condition
-    group_by(condition, length) %>%
     mutate(
-      condition_frequency = mean(sample_frequency),
-      sd = sd(sample_frequency)
+      sample_sum = sum(count),
+      sample_frequency = count / sample_sum
     ) %>%
-    ungroup()
+    group_by(condition, length) %>%
+    summarise(
+      condition_frequency = mean(sample_frequency),
+      sd = sd(sample_frequency),
+      .groups = "drop"
+    )
 
   # Set plotting and output columns
   y_value <- "condition_frequency"
@@ -176,10 +173,11 @@ df_output <- df %>%
       "condition_frequency",
       "sd",
       "mi_norm_condition_avg",
-      "mi_norm_sd"
+      "mi_norm_sd",
+      "rpm_mirna_avg",
+      "rpm_mirna_sd"
     ))
   ) %>%
-  distinct() %>%
   arrange(condition, length)
 
 # Save to CSV
