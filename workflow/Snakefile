@@ -4,6 +4,8 @@ VERSION = "v0.3.0"
 
 # Based on:
 # https://github.com/rberrens/SPOCD1-piRNA_directed_DNA_met/tree/master/piRNA_analysis
+# https://www.nature.com/articles/s41467-023-42787-1
+# https://github.com/bowhan/piPipes
 
 
 # load configuration
@@ -27,6 +29,7 @@ containerized: "docker://niekwit/smallrna-seq:v0.3.0"
 GENOME = config["genome"]
 SAMPLES = samples()
 NCRNA_URL = ensembl_ncrna_url(config)
+check_mirna_correction_settings(config)
 
 # Only use a leader sample when the TEsmall genome database does not yet exist
 _tesmall_genome_db = os.path.join(config["tesmall"]["dbfolder"], "genomes", GENOME)
@@ -40,6 +43,7 @@ MIRBASE_GENOME = mirbase_genome(config)
 include: "rules/length_distribution.smk"
 include: "rules/te_small.smk"
 include: "rules/pingpong.smk"
+include: "rules/bigwig.smk"
 
 
 onstart:
@@ -92,6 +96,11 @@ if config["tesmall"]["run_tesmall"]:
             "results/plots/te_small/bargraph.pdf",
             "results/plots/te_small/stacked_bar_te.pdf",
             "results/plots/te_small/stacked_bar_te.csv",
+            expand("results/bigwig/mirna_{sample}.bw", sample=SAMPLES),
+            expand(
+                "results/bigwig/mirna_{condition}_average.bw",
+                condition=set(config["samples"].values()),
+            ),
         ]
     )
 

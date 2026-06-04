@@ -31,6 +31,12 @@ length_distribution:
   mirna_min: 19
   mirna_max: 25
 
+# miRNA Bigwig parameters
+bigwig:
+  read_length: 50 # used to select effective genome size for bamCoverage
+  normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
+  extra: "" # additional bamCoverage arguments
+
 pingpong:
   mismatch: 3
   fasta: resources/L1mTf.fa

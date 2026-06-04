@@ -8,6 +8,7 @@ rule te_small:
         report="results/te_small/{sample}/report.html",
         fastq="results/te_small/{sample}/{sample}.rm_rRNA.fastq",
         rlen="results/te_small/{sample}/{sample}.anno.rlen.info",
+        bam="results/te_small/{sample}/{sample}.3trf_free.bam",
     params:
         outdir=lambda wildcards, output: os.path.dirname(output.txt),
         genome=GENOME,

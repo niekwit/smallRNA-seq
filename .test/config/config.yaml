@@ -22,6 +22,12 @@ tesmall:
   mismatch: 0
   extra_args: ""
 
+# miRNA Bigwig parameters
+bigwig:
+  read_length: 50 # used to select effective genome size for bamCoverage
+  normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
+  extra: "" # additional bamCoverage arguments
+
 length_distribution:
   apply_mirna_correction: False
   mirna_correction_method: length # length or align
