@@ -57,7 +57,10 @@ onerror:
 # Target rule
 # -----------------------------------------------------
 TARGETS = [
-    "results/plots/length_distribution.pdf",
+    expand(
+        "results/plots/length_distribution_{method}.pdf",
+        method=length_normalisation_method(config),
+    ),
     "results/plots/pingpong.pdf",
     "results/plots/pingpong.csv",
     expand(

@@ -56,10 +56,10 @@ rule plot_length_distribution:
     input:
         unpack(plot_length_distribution_input),
     output:
-        pdf="results/plots/length_distribution.pdf",
-        csv="results/plots/length_distribution.csv",
+        pdf="results/plots/length_distribution_{method}.pdf",
+        csv="results/plots/length_distribution_{method}.csv",
     log:
-        "logs/plot_length_distribution.log",
+        "logs/plot_length_distribution_{method}.log",
     conda:
         "../envs/R.yaml"
     script:

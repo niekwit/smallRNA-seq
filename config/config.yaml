@@ -23,7 +23,7 @@ tesmall:
   extra_args: ""
 
 length_distribution:
-  apply_mirna_correction: TRUE
+  apply_mirna_correction: True # False will total count normalise
   mirna_correction_method: length # length or align
 
   # miRNA length range for correction

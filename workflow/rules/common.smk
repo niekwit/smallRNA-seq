@@ -2,13 +2,11 @@ import glob
 import re
 import sys
 import pandas as pd
+from snakemake.utils import validate
 
-# from snakemake.utils import validate
 
-
-# validate sample sheet and config file
-# validate(samples, schema="../../config/schemas/samples.schema.yaml")
-# validate(config, schema="../../config/schemas/config.schema.yaml")
+# validate config file
+validate(config, schema="../../config/schemas/config.schema.yaml")
 
 
 def samples():
@@ -108,11 +106,19 @@ def plot_length_distribution_input(wildcards):
     apply_correction = config["length_distribution"]["apply_mirna_correction"]
     method = config["length_distribution"]["mirna_correction_method"]
     if apply_correction and method == "align":
-        input["sam"] = expand(
-            "results/mirna_correction/{sample}_count.sam", sample=SAMPLES
-        )
-        print("Using miRNA-based correction by alignment not working yet...")
-        print("Please select another method")
-        sys.exit(1)
+        input["mirna_fasta"] = expand("results/mirna/{sample}.fasta", sample=SAMPLES)
 
     return input
+
+
+def length_normalisation_method(config):
+    if not config["length_distribution"]["apply_mirna_correction"]:
+        return "total_count_normalisation"
+    else:
+        method = config["length_distribution"]["mirna_correction_method"]
+        if method == "align":
+            return "mirna_aligned_count_normalisation"
+        elif method == "length":
+            return "mirna_length_count_normalisation"
+        else:
+            raise ValueError(f"Unsupported miRNA correction method: {method}")

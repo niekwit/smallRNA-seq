@@ -42,34 +42,64 @@ df <- bind_rows(length_distributions) %>%
   filter(length >= 18 & length <= 34)
 
 if (snakemake@config$length_distribution$apply_mirna_correction) {
-  # Apply miRNA-based normalization
-  print("Applying miRNA-based normalization")
-  # Based on:
-  # https://link.springer.com/article/10.15252/embj.201386855
-  mirna_min <- snakemake@config$length_distribution$mirna_min
-  mirna_max <- snakemake@config$length_distribution$mirna_max
+  method <- snakemake@config$length_distribution$mirna_correction_method
 
-  df <- df %>%
-    group_by(sample) %>%
-    mutate(
-      mirna_sum = sum(count[length >= mirna_min & length <= mirna_max])
-    ) %>%
-    # Normalize every length's count by the miRNA sum of that sample
-    mutate(
-      mi_norm_frequency = count / mirna_sum
-    ) %>%
-    # Calculate mean and SD based on miRNA-normalized values
-    group_by(condition, length) %>%
-    mutate(
-      mi_norm_condition_avg = mean(mi_norm_frequency),
-      mi_norm_sd = sd(mi_norm_frequency)
-    ) %>%
-    ungroup()
+  if (method == "align") {
+    # Normalise by total aligned miRNA counts (reads per million miRNA).
+    # miRNA FASTA headers encode read count as ">readID-count"; sum all
+    # counts across sequences to get the total miRNA library size per sample.
+    print("Applying miRNA-based normalization (align method)")
+    mirna_files <- snakemake@input[["mirna_fasta"]]
 
-  # Set plotting and output columns
-  y_value <- "mi_norm_condition_avg"
-  y_sd <- "mi_norm_sd"
-  y_label <- "Fraction (miRNA-Normalized)"
+    mirna_totals <- lapply(mirna_files, function(f) {
+      sample_name <- str_replace(basename(f), "\\.fasta$", "")
+      headers <- grep("^>", readLines(f), value = TRUE)
+      counts <- as.integer(
+        str_split_fixed(str_remove(headers, "^>"), "-", 2)[, 2]
+      )
+      data.frame(sample = sample_name, mirna_total = sum(counts, na.rm = TRUE))
+    })
+    mirna_totals_df <- bind_rows(mirna_totals)
+
+    df <- df %>%
+      left_join(mirna_totals_df, by = "sample") %>%
+      group_by(sample) %>%
+      mutate(rpm_mirna = count / mirna_total * 1e6) %>%
+      group_by(condition, length) %>%
+      mutate(
+        rpm_mirna_avg = mean(rpm_mirna),
+        rpm_mirna_sd = sd(rpm_mirna)
+      ) %>%
+      ungroup()
+
+    y_value <- "rpm_mirna_avg"
+    y_sd <- "rpm_mirna_sd"
+    y_label <- "Reads per million miRNA"
+  } else {
+    # Length-based miRNA normalisation.
+    # Based on:
+    # https://link.springer.com/article/10.15252/embj.201386855
+    print("Applying miRNA-based normalization (length method)")
+    mirna_min <- snakemake@config$length_distribution$mirna_min
+    mirna_max <- snakemake@config$length_distribution$mirna_max
+
+    df <- df %>%
+      group_by(sample) %>%
+      mutate(
+        mirna_sum = sum(count[length >= mirna_min & length <= mirna_max])
+      ) %>%
+      mutate(mi_norm_frequency = count / mirna_sum) %>%
+      group_by(condition, length) %>%
+      mutate(
+        mi_norm_condition_avg = mean(mi_norm_frequency),
+        mi_norm_sd = sd(mi_norm_frequency)
+      ) %>%
+      ungroup()
+
+    y_value <- "mi_norm_condition_avg"
+    y_sd <- "mi_norm_sd"
+    y_label <- "Fraction (miRNA-Normalized)"
+  }
 } else {
   print("No miRNA-based normalization applied")
   df <- df %>%

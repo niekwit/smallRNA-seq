@@ -9,6 +9,10 @@ properties:
     description: The reference genome to be used.
     enum: ["hg38", "mm39"]
 
+  release:
+    type: integer
+    description: Ensembl release number for reference data downloads.
+
   samples:
     type: object
     description: Mapping of sample names to their respective experimental conditions.
@@ -58,13 +62,33 @@ properties:
       apply_mirna_correction:
         type: boolean
         description: Enable miRNA-based normalization for length distribution plots.
+      mirna_correction_method:
+        type: string
+        description: >
+          Method for miRNA-based normalization. "length" uses reads within a
+          defined length window as a proxy for miRNA counts. "align" uses
+          the count of reads that aligned to miRNA hairpin sequences.
+        enum: ["length", "align"]
       mirna_min:
         type: integer
-        description: Minimum length of the miRNA normalization window.
+        description: >
+          Minimum read length defining the miRNA window
+          (mirna_correction_method = length only).
       mirna_max:
         type: integer
-        description: Maximum length of the miRNA normalization window.
-    required: ["apply_mirna_correction"]
+        description: >
+          Maximum read length defining the miRNA window
+          (mirna_correction_method = length only).
+    required: ["apply_mirna_correction", "mirna_correction_method"]
+    if:
+      properties:
+        apply_mirna_correction:
+          const: true
+        mirna_correction_method:
+          const: length
+      required: ["apply_mirna_correction", "mirna_correction_method"]
+    then:
+      required: ["mirna_min", "mirna_max"]
 
   pingpong:
     type: object
@@ -75,15 +99,13 @@ properties:
       fasta:
         type: string
         description: Path to the consensus sequence FASTA file.
-      name:
-        type: string
-        description: Display name for the analyzed element.
       window:
         type: integer
-        description: Analysis window size.
-    required: ["fasta", "name"]
+        description: Analysis window size for ping-pong overlap distances.
+    required: ["fasta", "window"]
 
 required:
   - genome
+  - release
   - samples
   - reference_condition
