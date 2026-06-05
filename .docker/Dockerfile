@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="ec2ebada5c43334b1bb1ba51a0e71ff958c473009f4d8c27304c2eee3fca56e6"
+LABEL io.github.snakemake.conda_env_hash="bab96c894ace999ad0304674740f6eb856e93e247ba8ff4c5b72d753a311e270"
 
 # Step 2: Retrieve conda environments
 
@@ -35,6 +35,17 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v7.9.0/bio/cutadapt/se/e
 #     - conda-forge::r-gridextra=2.3
 RUN mkdir -p /conda-envs/971e30874532c7c91e6494d19e958a88
 COPY workflow/envs/R.yaml /conda-envs/971e30874532c7c91e6494d19e958a88/environment.yaml
+
+# Conda environment:
+#   source: workflow/envs/deeptools.yaml
+#   prefix: /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a
+#   channels:
+#     - conda-forge
+#     - bioconda
+#   dependencies:
+#     - deeptools=3.5.6
+RUN mkdir -p /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a
+COPY workflow/envs/deeptools.yaml /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/pingpong.yaml
@@ -88,6 +99,7 @@ COPY workflow/envs/te_small.yaml /conda-envs/601a390285cf905b130f31f8ddea6719/en
 
 RUN conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --file /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32/environment.yaml && \
     conda env create --prefix /conda-envs/971e30874532c7c91e6494d19e958a88 --file /conda-envs/971e30874532c7c91e6494d19e958a88/environment.yaml && \
+    conda env create --prefix /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a --file /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a/environment.yaml && \
     conda env create --prefix /conda-envs/03d5424c620255c2c4b5db4e7d3a747f --file /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/environment.yaml && \
     conda env create --prefix /conda-envs/01ea981e63e66e6a34e85f55e825d6be --file /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml && \
     conda env create --prefix /conda-envs/601a390285cf905b130f31f8ddea6719 --file /conda-envs/601a390285cf905b130f31f8ddea6719/environment.yaml && \
