@@ -67,6 +67,7 @@ TARGETS = [
     ),
     "results/plots/pingpong.pdf",
     "results/plots/pingpong.csv",
+    "results/plots/rna_counts.pdf",
     expand(
         "results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
         te=TE,

@@ -83,7 +83,8 @@ rule remove_rrna_reads:
         fasta="results/fasta/{sample}.collapsed.fasta",
         index_files=expand(f"resources/bowtie1_index/rrna_{GENOME}.{{ext}}", ext=EXT),
     output:
-        fasta="results/fasta/{sample}.rrna_removed.fasta",
+        un_fasta="results/fasta/{sample}.rrna_removed.fasta",
+        al_fasta="results/rrna/{sample}.fasta",
         bam="results/rrna/{sample}.bam",
     params:
         index_prefix=lambda wildcards, input: input.index_files[0].replace(
@@ -101,11 +102,28 @@ rule remove_rrna_reads:
         "-v 2 "
         "-k 1 "
         "--best "
-        "--un {output.fasta} "
+        "--un {output.un_fasta} "
+        "--al {output.al_fasta} "
         "-x {params.index_prefix} "
         "{input.fasta} 2> {log} | "
         "samtools view -F 4 -bS - | "
         "samtools sort -o {output.bam}"
+
+
+# Plot rRNA and miRNA read counts per sample
+# ------------------------------------------------------------
+rule plot_rna_counts:
+    input:
+        rrna=expand("results/rrna/{sample}.fasta", sample=SAMPLES),
+        mirna=expand("results/mirna/{sample}.fasta", sample=SAMPLES),
+    output:
+        pdf="results/plots/rna_counts.pdf",
+    log:
+        "logs/plot_rna_counts.log",
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/plot_rna_counts.R"
 
 
 rule download_mirna_fasta:
@@ -173,17 +191,25 @@ rule remove_mirna_reads:
         # mapping parameters based on:
         # https://www.nature.com/articles/s41467-023-42787-1
         # https://github.com/bowhan/piPipes
+        # --un:  truly unmapped reads (0 alignments)
+        # --max: reads mapping to >M miRNA hairpins (multi-mappers)
+        # Both are merged into {output.filtered} so that piRNA-like reads
+        # sharing sequence with miRNA families are not silently discarded.
+        "TMP_UN=$(mktemp -p {resources.tmpdir}) && "
+        "TMP_MAX=$(mktemp -p {resources.tmpdir}) && "
         "bowtie "
-        "-f --sam --norc -m 1 --best --strata --chunkmbs 1024 "
+        "-f --sam -M 1 --best --strata --chunkmbs 1024 "
         "--threads {threads} "
         "-x {params.index_prefix} "
-        "--un {output.filtered} "
+        "--un $TMP_UN "
+        "--max $TMP_MAX "
         "--al {output.mirna} "
         "{input.fasta} 2> {log} | "
         "samtools view -F 4 -bS - | "
         "samtools sort -o {output.mirna_bam} && "
+        "cat $TMP_UN $TMP_MAX > {output.filtered} && "
+        "rm $TMP_UN $TMP_MAX && "
         "touch {output.mirna}"
-        # create empty file if no miRNA reads are found
 
 
 # Build bowtie1 index for ping-pong analysis
