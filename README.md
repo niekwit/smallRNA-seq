@@ -6,7 +6,9 @@
 [![workflow catalog](https://img.shields.io/badge/Snakemake%20workflow%20catalog-darkgreen)](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/niekwit/smallRNA-seq)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20529122.svg)](https://doi.org/10.5281/zenodo.20529122)
 
-A Snakemake workflow for `smallRNA-seq`
+A Snakemake workflow for `smallRNA-seq` analysis.
+
+Based on [Zoch et al.](https://www.nature.com/articles/s41586-020-2557-5), [Han et al.](https://academic.oup.com/bioinformatics/article/31/4/593/2748154?login=true), [Castañeda et al.](https://link.springer.com/article/10.15252/embj.201386855), and [Van Lopik et al.](https://www.nature.com/articles/s41467-023-42787-1).
 
 ## Usage
 
