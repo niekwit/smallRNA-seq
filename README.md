@@ -15,44 +15,51 @@ Prepare your analysis directory as follows:
 ```shell
 .
 ├── config
-│   ├── config.yaml
-│   ├── README.md
-│   └── schemas
-│       ├── config.schema.yaml
-│       └── samples.schema.yaml
+│   ├── config.yaml
+│   ├── README.md
+│   └── schemas
+│       ├── config.schema.yaml
+│       └── samples.schema.yaml
 ├── reads
-│   ├── KO_1
-│   │   └── KO_1.fastq.gz
-│   ├── KO_2
-│   │   └── KO_2.fastq.gz
-│   ├── WT_1
-│   │   └── WT_1.fastq.gz
-│   └── WT_2
-│       └── WT_2.fastq.gz
+│   ├── KO_1
+│   │   └── KO_1.fastq.gz
+│   ├── KO_2
+│   │   └── KO_2.fastq.gz
+│   ├── WT_1
+│   │   └── WT_1.fastq.gz
+│   └── WT_2
+│       └── WT_2.fastq.gz
 ├── resources
-│   └── TE.fa
+│   └── TE.fa
 └── workflow
     ├── envs
-    │   ├── pingpong.yaml
-    │   ├── process_reads.yaml
-    │   ├── R.yaml
-    │   └── te_small.yaml
+    │   ├── deeptools.yaml
+    │   ├── pingpong.yaml
+    │   ├── process_reads.yaml
+    │   ├── R.yaml
+    │   └── te_small.yaml
     ├── rules
-    │   ├── common.smk
-    │   ├── length_distribution.smk
-    │   ├── pingpong.smk
-    │   └── te_small.smk
+    │   ├── bigwig.smk
+    │   ├── common.smk
+    │   ├── length_distribution.smk
+    │   ├── pingpong.smk
+    │   └── te_small.smk
     ├── scripts
-    │   ├── deseq2.R
-    │   ├── pingpong.py
-    │   ├── plot_length_distribution.R
-    │   ├── plot_pca.R
-    │   ├── plot_pingpong.R
-    │   ├── sequence_bias_pirna.R
-    │   └── te_small.py
+    │   ├── deseq2.R
+    │   ├── pingpong.py
+    │   ├── plot_length_distribution.R
+    │   ├── plot_pca.R
+    │   ├── plot_pingpong.R
+    │   ├── plot_rna_counts.R
+    │   ├── sequence_bias_pirna.R
+    │   ├── te_pos_coverage.R
+    │   ├── te_small_bargraph.R
+    │   ├── te_small.py
+    │   ├── te_small_piechart.R
+    │   └── te_small_stacked_bar_te.R
     └── Snakefile
 
-12 directories, 26 files
+12 directories, 31 files
 ```
 
 The workflow and config directories can be copied from this repository.
@@ -92,6 +99,11 @@ length_distribution:
   # (for mirna_correction_method = length)
   mirna_min: 19
   mirna_max: 25
+
+bigwig:
+  read_length: 50 # used to select effective genome size for bamCoverage
+  normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
+  extra: "" # additional bamCoverage arguments
 
 pingpong:
   mismatch: 3
@@ -218,251 +230,6 @@ ctagtcggccatcactggaaagagaggcccattggacacacaaactttatatgccccaga
 acaggggaacgccagggccaaaaagggggagtgggcgggtaggggagtgggggtgggtgg
 gtatgggggacttttggtatagcattggaaatgtaaatgagctaaatacctaataaaaaa
 tggaaagaaa
->L1MdTf_I
-caggcggaagcgcggaggcgctgaggcagcaccctgcgtgggccggggacagccggccac
-cttccggaccagaggacaggtgcccgcccggctggggaggcgrcctaagccacagcagca
-gcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggtgaga
-gggtgcgccagagaacctgacagcytctggaacaggcggaagcacagaggcgctgaggca
-gcaccctgtgtgggccggggacagccggccaccttccggaccrgaggacaggtgcccrcc
-cggctggggaggcggcctaagccacagcagcagcggtcgccatcttggtccgggacccgc
-cgaacttaggaaattagtctgaacaggtgagagggtgcgccagagaacctgacagcttct
-ggaacaggcggaagcacagaggcgctgaggcagcaccctgtgtgggccggggacagccgg
-ccaccttccggaccrgaggacaggtgcccrcccggctggggaggcggcctaagccacagc
-agcagcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggt
-gagagggtgcgccagagaacctgacagcttctggaacaggcrgaagcacagaggcgctga
-ggcagcaccctgtgtgggccggggacagccggccaccttccggaccrgaggacaggtgcc
-cgcccggctggggaggcggcctaagccacagcagcagcggtcgccatcttggtccgggac
-ccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccagagaacctgacagc
-ytctggaacaggcagaagcacagaggsgctgaggcagcaccctgtgtgggccggggacag
-ccggccaccttccggaccggaggacaggtgcccgcccggctggggaggcgacctaagcca
-cagcagcagcggtcgccatcttggtccgggacccgccgaacttaggaaattagtctgaac
-aggtgagagggtgcgccagagaacctgacagcttctggaacaggcggaagcacagaggcg
-ctgaggcagcaccctgygtgggccggggacagccggccaccttccggaccagaggacagg
-tgcccrcccggctggggaggcggcctaagccacagcagcagcggtcgccatcttggtccg
-ggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccagagaacctga
-cagcttctggaacaggcagaagcacagaggcgctgaggcagcaccctgtgtgggccgggg
-acagccggccaccttccggaccagaggacaggtgcccgcccggctggggaggcgacctaa
-gccacagcagcagcggtcgccatcttggtcccgggactccaaggaacttaggaatttagt
-ctgcttaggtgagagtctgtaccacctgggaactgccaaagcaacacagtgtctgagaaa
-ggtcctgttttgggccttcttcttcggccaggaggaggtccaaatacaagatatctgcgc
-accttccctgtaagagagcttgccagcagagagtgctctgagcactgaaactcagaggag
-agaatctgtctcccaggtctgctgatagacggtaacagaatcaccagaagaacaatctct
-aaacagagtcaactataactactaactccagagattaccagatggcgaaaggtaaacgga
-ggaatcttactaacaggaaccaagaccactcaccatcaccagaacccagcacacccactt
-cgcccagtccagggaaccccaacacacctgagaacctagacctagatttaaaagcatatc
-tcatgatgatggtagaggacatcaagaaggactttaataaatcacttaaagaaatacagg
-agaacactgctaaagagttacaagtccttaaagaaaaacaggaaaacacaatcaaacagg
-tagaagtccttacagaaaaagaggaaaaaacatacaaacaggtgatggaaatgaacaaaa
-ccatactagacctaaaaagggaagtagacacaataaagaaaactcaaagcgaggcaacac
-tagagatagaaaccctaggaaagaaatctggaaccatagatttgagcatcagcaacagaa
-tacaagagatggaagagagaatctcaggtgcagaagattccatagagaacatcggcacaa
-caatcaaagaaaatggaaaatgcaaaaagatcctaactcaaaatatccaggaaatccagg
-acacaataagaagaccaaacgtacggataataggagtggatgagaatgaagattttcaac
-tcaaaggtccagcaaacatcttcaacaaaattattgaagaaaacttcccaaatctaaaga
-atgagatgcatatgaacatacaagaagcctacagaactccaaatagactggaccagaaaa
-gaaattcctcccgacacataataatcagaacatcaaatgcactaaataaagatagaatac
-taaaagcagtaagggaaaaaggtcaagtaacatataaaggcaagcctatcagaattacac
-cagatttttcaccagagactatgaaagccagaagagcctggacagatgttatacagacac
-taagagaacacaaactgcagcccaggctactatacccagccaaactctcaattatcatag
-agggagaaaccaaagtattccacgacaaaaccaaattcacgcattatctctccacgaatc
-cagcccttcaaaggataataacagaaaaaaaccaatacaagaacgggaacaacgccctag
-aaaaaacaagaaggtaatccctcaacaaacctaaaagaagacagccacaagaacagaatg
-ccacctttaacaactaaaataacaggaagcaacaattacttttccttaatatctcttaac
-atcaatggtctcaactcgccaataaaaagacatagactaacaaactggctacacaaacaa
-gacccaacattttgctgcttacaggaaactcatctcagagaaaaagatagacactacctc
-agaatgaaaggctggaaaacaattttccaagcaaatggtatgaagaaacaagcaggagta
-gccatcctaatatctgataagattgacttccaacccaaagtcatcaaaaaagacaaggag
-ggacacttcattctcatcaaaggtaaaatcctccaagaggaactctcaattctgaatatc
-tatgctccaaatacaagagcagccacattcactaaagaaactttagtaaagctcaaagca
-cacattgcgcctcacacaataatagtgggagacttcaacacaccactttcaccaatggac
-agatcatggaaacagaaactaaacagggacacactgaaactaacagaagtgatgaaacaa
-atggatctgacagatatctacagaacattttwccctaaaacaaaaggatataccttcttc
-tcagcacctcatggtaccttctccaaaattgaccacataataggtcacaaatcaggcctc
-aacagattcaaaaatattgaaattgtcccatgtatcctatcagatcaccatgcactaagg
-ctgatcttcaataacaaaataaataacagaaagccaacattcacatggaaactgaacaac
-actcttctcaatgataccttggtcaaggaaggaataaagaaagaaattaaagacttttta
-gagtttaatgaaaatgaagccacaacgtacccaaacctttgggacacaatgaaagcattt
-ctaagagggaaactcatagctatgagtgccttcaagaaaaaacgggagagagcacatact
-agcagcttgacaacacatctaaaagctctagaaaaaaaggaagcaaattcacccaagagg
-agtagacggcaggaaataatcaaactcaggggtgaaatcaaccaagtggaaacaagaaga
-actattcaaagaattaaccaaacgaggagttggttctttgagaaaatcaacaagatagat
-aaacccttagctagactcactaaagggcacagggacaaaatcctaattaacaaaatcaga
-aatgaaaagggagacataacaacagatcctgaagaaatccaaaacaccatcagatccttc
-tacaaaaggctatactcaacaaaactggaaaacctggacgaaatggacaaatttctggac
-agataccaggtaccaaagttgaatcaggatcaagttgaccttctaaacagtcccatatcc
-cctaaagaaatagaagcagttattaatagtctcccagccaaaaaaagcccaggaccagac
-gggtttagtgcagagttctatcagaccttcaaagaagatctaactccagttctgcacaaa
-ctttttcacaagatagaagtagaaggtattctacccaactcattttatgaagccactatt
-actctgatacctaaaccacagaaagatccaacaaagatagagaacttcagaccaatttct
-cttatgaacatcgatgcaaaaatccttaataaaattctcgctaaccgaatccaagaacac
-attaaagcaatcatccatcctgaccaagtaggttttattccagggatgcagggatggttt
-aatatacgaaaatccatcaatgtaatccattatataaacaaactcaaagacaaaaaccac
-atgatcatctcgttagatgcagaaaaagcatttgacaagatccaacacccattcatgata
-aaagttctggaaagatcaggaattcaaggccaatacctaaacatgataaaagcaatctac
-agcaaaccagtagccaacatcaaagtaaatggagagaagctggaagcaatcccactaaaa
-tcagggactagacaaggctgcccactttctccctaccttttcaacatagtacttgaagta
-ttagccagagcaattcgacaacaaaaggagatcaaggggatacaaattggaaaagaggaa
-gtcaaaatatcactttttgcagatgatatgatagtatatataagtgaccctaaaaattcc
-aacagagaactcctaaacctgataaacagcttcggtgaagtagctggatataaaattaac
-tcaaacaagtcaatggcctttctctacacaaagaataaacaggctgagaaagaaattagg
-gaaacaacacccttctcaatagccacaaataatataaaatatctcggcgtgactctaacg
-aaggaagtgaaagatctgtatgataaaaacttcaagtccctgaagaaagaaattaaagaa
-gatctcagaagatggaaagatctcccatgctcatggattggcaggaccaacattgtaaaa
-atggctatcttgccaaaagcaatctacagattcaatgcaatccccattaaaattccaact
-caattcttcaacgaattagaaggagcaatttgcaaattcatctggaataacaaaaaaccg
-aggatagcaaaaactcttctcaaggataaaagaacctctggtggaatcaccatgcctgac
-ctaaagctttactacagagcaattgtgataaaaactgcatggtactggtatagagacaga
-caagtggaccaatggaatagaattgaagacccagaaatgaacccacacacctatggtcac
-ttgatcttcgacaagggagccaaaaccatccagtggaagaaagacagcattttcaacaat
-tggtgctggcacaactggttgttatcatgtagaagaatgcgaatcgatccatacttatct
-ccttgtactaaggtcaaatctaagtggatcaaggaacttcacataaaaccagagacactg
-aaacttatagaggagaaagtggggaaaagccttgaagatatgggcacaggggaaaaattc
-ctgaacagaacagcaatggcttgtgctgtaagatcgagaattgacaaatgggacctaatg
-aaactccaaagtttctgcaaggcaaaagacactgtctataagacaaaaagaccaccaaca
-gactgggaaaggatctttacctatcctaaatcagataggggactaatatccaacatatat
-aaagaactcaagaaggtggacctcagaaaatcaaataacccccttaaaaaatggggctca
-gaactgaacaaagaattctcacctgaggaataccgaatggcagagaagcacctgaaaaaa
-tgttcaacatccttaatcatcagggaaatgcaaatcaaaacaaccctgagattccacctc
-acaccagtgagaatggctaagatcaaaaattcaggtgacagcagatgctggcgaggatgt
-ggagaaagaggaacactcctccattgttggtgggattgcaggcttgtacaaccactctgg
-aaatcagtctggcggttcctcagaaaattggacatagtactaccggaggatccagcaata
-cctctcctgggcatatatccagaagaagccccaactggtaagaaggacacatgctccact
-atgttcatagcagccttatttataatagccagaaactggaaagaacccagatgcccctca
-acagaggaatggatacagaaaatgtggtacatctacacaatggagtactactcagctatt
-aaaaagaatgaatttatgaaattcctagccaaatggatggacctggagagcatcatcctg
-agtgaggtaacacaatcacaaaggaactcacacaatatgtactcactgataagtggatac
-tagcccaaaacctaggatacccacgatataagatacaatttcctaaacacatgaaactca
-agaaaaatgaagactgaagtgtggacactatgcccctccttagaagtgggaacaaaacac
-ccatggaaggagttacagaaacaaagtttggagctgagatgaaaggatggaccatgtaga
-gactgccatatccagggatccaccccataatcagcatccaaacgctgacaccattgcata
-tactagcaagattttatcgaaaggacccagatgtagctgtctcttgtgagactatgccgg
-ggcctagcaaacacagaagtggatgctcacagtcagctaatggatggatcacagggctcc
-caatggaggagctagagaaagtacccaaggagctaaagggatcttcaaccctataggtgg
-aacaacattatgaactaaccagtacccctgagctcttgactctagctgcatatgtatcaa
-aagatggcctagtcggccatcactggaaagagaggcccattggacacgcagactttgtgt
-gccccggtacaggggaacgccagggccaaagggggggagtgggtgggtaggggagtgggg
-gtgggtgggtaagggggacttttggtatagcattggaaatgtaaatgagctaaataccta
-ataaaaaatggaaaaaaa
->L1MdTf_II
-gaggacaggtgcccgcccggctggggaggcgrcctaagccacagcagcagcggtcgccat
-cttggtccgggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcgccag
-agaacctgacagcttctggaacaggcggaagcacagaggcgctgaggcagcaccctgtgt
-gggccggggacagccggccaccttccggaccggaggacaggtgcccacccggctggggag
-gcggcctaagccacagcagcagcggtcgccatcttggtccgggacccgccgaacttagga
-aattagtctgaacaggtgagagggtgcgccagagaacctgacagcttctggaacaggcgg
-aagcacagaggcgctgaggcagcaccctktgtgggccggggacagccrgccaccttccgg
-accggaggacaggtgcccgcccggctggggaggcggcctaagccacagcagcagcggtcg
-ccatcttggtccgggacccgccgaacttaggaaattagtctgaacaggtgagagggtgcg
-ccagagaacctgacagcttctggaacaggcagaagcacagaggcgctgaggcagcaccct
-gtgtgggccggggacagccggccaccttccggaccggaggacaggtgcccgcccggctgg
-ggaggcgrcctaagccacagcagcagcggtcgccatcttggtccgggacccgccgaactt
-aggaaattagtctgaacaggtgagagggtgcgccagagaacctgacagcttctggaacag
-gcrgaagcacagaggcgctgaggcagcaccctktgtgggccggggacagccggccaccdt
-ccggaccggaggacaggtgcccgcccggctggggaggcggcctaagccacagcagcagcg
-gtcgccatcttggtccgrgacccgccgaacttaggaaattagtctgaacaggtgagaggg
-tgcgccagagaacctgacagcttctggaacaggcagaagcacagaggcgctgaggcagca
-ccctgtgtgggccggggacagccggccaccttccggaccggaggacaggtgcccacccgg
-ctggggaggcggcctaagccacagcagcagcggtcgccatcttggtcccgggactccaag
-gaacttaggaatttagtctgcttaggtgagagtctgtaccacctgggaactgccaaagca
-acacastgtctgagaaaggtcctgttttgggccttcttcttcggccaggaggaggtccaa
-atacaagatatctgcgcaccttccctgtaagagagcttgccagcagagagtgctctgagc
-actgaaactcagaggagagaatctgtctcccaggtctgctgatagacggtaacagaatca
-ccagaagaacaatctctaaacagagtcaactataactactaactccagagattaccagat
-ggcgaaaggtaaacggaggaatcttactaacaggaaccaagaccactcaccatcaccaga
-acccagcacacccacttcgcccagtccagggaaccccaacacacctgagaacctagacct
-agatttaaaagcatatctcatgatgatggtagaggacatcaagaaggactttaataaatc
-acttaaagaaatacaggagaacactgctaaagagttacaagtccttaaagaaaaacagga
-aaacacaatcaaacaggtagaagtccttacagaaaaagaggaaaaaacatacaaacaggt
-gatggaaatgaacaaaaccatactagacctaaaaagggaagtagacacaataaagaaaac
-tcaaagcgaggcaacactagagatagaaaccctaggaaagaaatctggaaccatagattt
-gagcatcagcaacagaatacaagagatggaagagagaatctcaggtgcagaagattccat
-agagaacatcggcacaacaatcaaagaaaatggaaaatgcaaaaagatcctaactcaaaa
-tatccaggaaatccaggacacaataagaagaccaaacgtacggataataggagtggatga
-gaatgaagattttcaactcaaaggtccagcaaacatcttcaacaaaattattgaagaaaa
-cttcccaaatctaaagaatgagatgcatatgaacatacaagaagcctacagaactccaaa
-tagactggaccagaaaagaaattcctcccgacacataataatcagaacatcaaatgcact
-aaataaagatagaatactaaaagcagtaagggaaaaaggtcaagtaacatataaaggcaa
-gcctatcagaattacaccagatttttcaccagagactatgaaagccagaagagcctggac
-agatgttatacagacactaagagaacacaaactgcagcccaggctactatacccagccaa
-actctcaattatcatagagggagaaaccaaagtattccacgacaaaaccaaattcacgca
-ttatctctccacgaatccagcccttcaaaggataataacagaaaaaaaccaatacaagaa
-cgggaacaacgccctagaaaaaacaagaaggtaatccctcaacaaacctaaaagaagaca
-gccacaagaacagaatgccacctttaacaactaaaataacaggaagcaacaattactttt
-ccttaatatctcttaacatcaatggtctcaactcgccaataaaaagacatagactaacaa
-actggctacacaaacaagacccaacattttgctgcttacaggaaactcatctcagagaaa
-aagatagacactacctcagaatgaaaggctggaaaacaattttccaagcaaatggtatga
-agaaacaagcaggagtagccatcctaatatctgataagattgacttccaacccaaagtca
-tcaaaaaagacaaggagggacacttcattctcatcaaaggtaaaatcctccaagaggaac
-tctcaattctgaatatctatgctccaaatacaagagcagccacattcactaaagaaactt
-tagtaaagctcaaagcacacattgcgcctcacacaataatagtgggagacttcaacacac
-cactttcaccaatggacagatcatggaaacagaaactaaacagggacacactgaaactaa
-cagaagtgatgaaacaaatggatctgacagatatctacagaacattttatcctaaaacaa
-aaggatataccttcttctcagcacctcatggtaccttctccaaaattgaccacataatag
-gtcacaaatcaggcctcaacagattcaaaaatattgaaattgtcccatgtatcctatcag
-atcaccatgcactaaggctgatcttcaataacaaaataaataacagaaagccaacattca
-catggaaactgaacaacactcttctcaatgataccttggtcaaggaaggaataaagaaag
-aaattaaagactttttagagtttaatgaaaatgaagccacaacgtacccaaacctttggg
-acacaatgaaagcatttctaagagggaaactcatagctatgagtgccttcaagaaaaaac
-gggagagagcacatactagcagcttgacaacacatctaaaagctctagaaaaaaaggaag
-caaattcacccaagaggagtagacggcaggaaataatcaaactcaggggtgaaatcaacc
-aagtggaaacaagaagaactattcaaagaattaaccaaacgaggagttggttctttgaga
-aaatcaacaagatagataaacccttagctagactcactaaagggcacagggacaaaatcc
-taattaacaaaatcagaaatgaaaagggagacataacaacagatcctgaagaaatccaaa
-acaccatcagatccttctacaaaaggctatactcaacaaaactggaaaacctggacgaaa
-tggacaaatttctggacagataccaggtaccaaagttgaatcaggatcaagttgaccttc
-taaacagtcccatatcccctaaagaaatagaagcagttattaatagtctcccagccaaaa
-aaagcccaggaccagacgggtttagtgcagagttctatcagaccttcaaagaagatctaa
-ctccagttctgcacaaactttttcacaagatagaagtagaaggtattctacccaactcat
-tttatgaagccactattactctgatacctaaaccacagaaagatccaacaaagatagaga
-acttcagaccaatttctcttatgaacatcgatgcaaaaattcttaataaaattctcgcta
-accgaatccaagaacacattaaagcaatcatccatcctgaccaagtaggttttattccag
-ggatgcagggatggtttaatatacgaaaatccatcaatgtaatccattatataaacaaac
-tcaaagacaaaaaccacatgatcatctcgttagatgcagaaaaagcatttgacaagatcc
-aacacccattcatgataaaagttctggaaagatcaggaattcaaggccaatacctaaaca
-tgataaaagcaatctacagcaaaccagtagccaacatcaaagtaaatggagagaagctgg
-aagcaatcccactaaaatcagggactagacaaggctgcccactttctccctaccttttca
-acatagtacttgaagtattagccagagcaattcgacaacaaaaggagatcaaggggatac
-aaattggaaaagaggaagtcaaaatatcactttttgcagatgatatgatagtatatataa
-gtgaccctaaaaattccaacagagaactcctaaacctgataaacagcttcggtgaagtag
-ctggatataaaattaactcaaacaagtcaatggcctttctctacacaaagaataaacagg
-ctgagaaagaaattagggaaacaacacccttctcaatagccacaaataatataaaatatc
-tcggcgtgactctaacgaaggaagtgaaagatctgtatgataaaaacttcaagtccctga
-agaaagaaattaaagaagatctcagaagatggaaagatctcccatgctcatggattggca
-ggaccaacattgtaaaaatggctatcttgccaaaagcaatctacagattcaatgcaatcc
-ccattaaaattccaactcaattcttcaacgaattagaaggagcaatttgcaaattcatct
-ggaataacaaaaaaccgaggatagcaaaaactcttctcaaggataaaagaacctctggtg
-gaatcaccatgcctgacctaaagctttactacagagcaattgtgataaaaactgcatggt
-actggtatagagacagacaagtggaccaatggaatagaattgaagacccagaaatgaacc
-cacacacctatggtcacttgatcttcgacaagggagccaaaaccatccagtggaagaaag
-acagcattttcaacaattggtgctggcacaactggttgttatcatgtagaagaatgcgaa
-tcgatccatacttatctccttgtactaaggtcaaatctaagtggatcaaggaacttcaca
-taaaaccagagacactgaaacttatagaggagaaagtggggaaaagccttgaagatatgg
-gcacaggggaaaaattcctgaacagaacagcaatggcttgtgctgtaagatcgagaattg
-acaaatgggacctaatgaaactccaaagtttctgcaaggcaaaagacactgtctataaga
-caaaaagaccaccaacagactgggaaaggatctttacctatcctaaatcagataggggac
-taatatccaacatatataaagaactcaagaaggtggacctcagaaaatcaaataaccccc
-ttaaaaaatggggctcagaactgaacaaagaattctcacctgaggaataccgaatggcag
-agaagcacctgaaaaaatgttcaacatccttaatcatcagggaaatgcaaatcaaaacaa
-ccctgagattccacctcacaccagtgagaatggctaagatcaaaaattcaggtgacagca
-gatgctggcgaggatgtggagaaagaggaacactcctccattgttggtgggattgcaggc
-ttgtacaaccactctggaaatcagtctggcggttcctcagaaaattggacatagtactac
-cggaggatccagcaatacctctcctgggcatatatccagaagaagccccaactggtaaga
-aggacacatgctccactatgttcatagcagccttatttataatagccagaaactggaaag
-aacccagatgcccctcaacagaggaatggatacagaaaatgtggtacatctacacaatgg
-agtactactcagctattaaaaagaatgaatttatgaaattcctagccaaatggatggacc
-tggagagcatcatcctgagtgaggtaacacaatcacaaaggaactcacacaatatgtact
-cactgataagtggatactagcccaaaacctaggatacccacgatataagatacaatttcc
-taaacacatgaaactcaagaaaaatgaagactgaagtgtggacactatgcccctccttag
-aagtgggaacaaaacacccatggaaggagttacagaaacaaagtatggagctgagatgaa
-aggatggaccatgtagagactgccatatccagggatccaccccataatcagcttccaaat
-gctgacaccattgcatacactagcaagattttactgaaaggacccagatgtagctgtctc
-ttgtgagactatgccggggcctagcaaacacagaagtggatgctcacagtcagctaatgg
-atggatcacagggctcccaatggaggagctagagaaagtacccaaggagctaaagggatc
-ttcaaccctataggtggaacaacattatgaactaaccagtacccctgagctcttgactct
-agctgcatatgtatcaaaagatggcctagtcggccatcactggaaagagaggcccattgg
-acacgcagactttgtgtgccccggtacaggggaacgccagggccaaagggggggagtggg
-tgggtaggggagtgggggtgggtgggtaagggggacttttggtatagcattggaaatgta
-aatgagctaaatacctaataaaaaatgdaaaaaaa
 ```
 
 </details>
@@ -491,48 +258,80 @@ $ snakemake --profile /home/niek/.config/snakemake/standard/
 
 ```shell
 results/
+├── bigwig
+│   ├── mirna_KO_1.bw
+│   ├── mirna_KO_2.bw
+│   ├── mirna_KO_average.bw
+│   ├── mirna_WT_1.bw
+│   ├── mirna_WT_2.bw
+│   └── mirna_WT_average.bw
 ├── fasta
-│   ├── KO_1.collapsed.fasta
-│   ├── KO_2.collapsed.fasta
-│   ├── WT_1.collapsed.fasta
-│   └── WT_2.collapsed.fasta
+│   ├── KO_1.collapsed.fasta
+│   ├── KO_1.rrna_mirna_removed.fasta
+│   ├── KO_1.rrna_removed.fasta
+│   ├── KO_2.collapsed.fasta
+│   ├── KO_2.rrna_mirna_removed.fasta
+│   ├── KO_2.rrna_removed.fasta
+│   ├── WT_1.collapsed.fasta
+│   ├── WT_1.rrna_mirna_removed.fasta
+│   ├── WT_1.rrna_removed.fasta
+│   ├── WT_2.collapsed.fasta
+│   ├── WT_2.rrna_mirna_removed.fasta
+│   └── WT_2.rrna_removed.fasta
 ├── length_distribution
-│   ├── KO_1_length_distribution.txt
-│   ├── KO_2_length_distribution.txt
-│   ├── WT_1_length_distribution.txt
-│   └── WT_2_length_distribution.txt
+│   ├── KO_1_length_distribution.txt
+│   ├── KO_2_length_distribution.txt
+│   ├── WT_1_length_distribution.txt
+│   └── WT_2_length_distribution.txt
+├── mirna
+│   ├── KO_1.bam
+│   ├── KO_1.fasta
+│   ├── KO_2.bam
+│   ├── KO_2.fasta
+│   ├── WT_1.bam
+│   ├── WT_1.fasta
+│   ├── WT_2.bam
+│   └── WT_2.fasta
 ├── pingpong
-│   ├── KO_1.bam
-│   ├── KO_1.csv
-│   ├── KO_2.bam
-│   ├── KO_2.csv
-│   ├── WT_1.bam
-│   ├── WT_1.csv
-│   ├── WT_2.bam
-│   └── WT_2.csv
+│   ├── KO_1.bam
+│   ├── KO_1.csv
+│   ├── KO_1_nt_bias.csv
+│   ├── KO_2.bam
+│   ├── KO_2.csv
+│   ├── KO_2_nt_bias.csv
+│   ├── WT_1.bam
+│   ├── WT_1.csv
+│   ├── WT_1_nt_bias.csv
+│   ├── WT_2.bam
+│   ├── WT_2.csv
+│   └── WT_2_nt_bias.csv
 ├── plots
-│   ├── length_distribution.csv
-│   ├── length_distribution.pdf
-│   ├── pingpong.csv
-│   ├── pingpong.pdf
-│   └── pirna_sequence_bias
-│       ├── L1MdTf_I
-│       │   ├── KO_vs_WT_bargraph.pdf
-│       │   ├── KO_vs_WT_frequencies.csv
-│       │   └── KO_vs_WT_logo.pdf
-│       ├── L1MdTf_II
-│       │   ├── KO_vs_WT_bargraph.pdf
-│       │   ├── KO_vs_WT_frequencies.csv
-│       │   └── KO_vs_WT_logo.pdf
-│       └── L1MdTf_III
-│           ├── KO_vs_WT_bargraph.pdf
-│           ├── KO_vs_WT_frequencies.csv
-│           └── KO_vs_WT_logo.pdf
+│   ├── length_distribution_total_count_normalisation.csv
+│   ├── length_distribution_total_count_normalisation.pdf
+│   ├── pingpong.csv
+│   ├── pingpong.pdf
+│   ├── pirna_sequence_bias
+│   │   └── L1MdTf_III
+│   │       ├── KO_vs_WT_bargraph.pdf
+│   │       ├── KO_vs_WT_frequencies.csv
+│   │       └── KO_vs_WT_logo.pdf
+│   ├── rna_counts.pdf
+│   └── te_pos_coverage
+│       └── L1MdTf_III.pdf
+├── rrna
+│   ├── KO_1.bam
+│   ├── KO_1.fasta
+│   ├── KO_2.bam
+│   ├── KO_2.fasta
+│   ├── WT_1.bam
+│   ├── WT_1.fasta
+│   ├── WT_2.bam
+│   └── WT_2.fasta
 ├── seqs
-│   ├── KO_1_seqs.txt
-│   ├── KO_2_seqs.txt
-│   ├── WT_1_seqs.txt
-│   └── WT_2_seqs.txt
+│   ├── KO_1_seqs.txt
+│   ├── KO_2_seqs.txt
+│   ├── WT_1_seqs.txt
+│   └── WT_2_seqs.txt
 └── trimmed
     ├── KO_1_qc.txt
     ├── KO_2_qc.txt
