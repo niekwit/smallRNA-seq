@@ -1,9 +1,0 @@
-name: process_reads
-channels:
-  - conda-forge
-  - bioconda
-  - nodefaults
-dependencies:
-  - bioconda::cutadapt=5.2
-  - bioconda::seqkit=2.12.0
-  - bioconda::bowtie2=2.5.4

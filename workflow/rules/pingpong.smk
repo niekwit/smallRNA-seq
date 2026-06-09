@@ -135,7 +135,7 @@ rule download_mirna_fasta:
     log:
         "logs/download_mirna.log",
     conda:
-        "../envs/process_reads.yaml"
+        "../envs/pingpong.yaml"
     shell:
         "timeout 15 wget -nv -O {output.fasta} {params.url} > {log} 2>&1 || "
         "(echo 'HTTPS failed, trying FTP fallback...' >> {log} && "
@@ -153,7 +153,7 @@ rule subset_mirna_fasta:
     log:
         f"logs/seqkit_{MIRBASE_GENOME}.log",
     conda:
-        "../envs/process_reads.yaml"
+        "../envs/pingpong.yaml"
     shell:
         "seqkit grep -n -r -p '{params.genome}' {input.fasta} > {output.fasta} 2> {log}"
 
@@ -323,7 +323,6 @@ rule plot_sequence_bias_pirna:
 rule te_pos_coverage:
     input:
         bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
-        fasta=config["pingpong"]["fasta"],
     output:
         pdf="results/plots/te_pos_coverage/{te}.pdf",
     threads: 2

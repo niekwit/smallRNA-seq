@@ -26,7 +26,7 @@ rule get_sequence:
     log:
         "logs/get_sequence/{sample}.log",
     conda:
-        "../envs/process_reads.yaml"
+        "../envs/pingpong.yaml"
     shell:
         "zcat {input.trimmed} | sed -n '2~4p' > {output.seqs}"
 
@@ -42,7 +42,7 @@ rule length_counts:
     log:
         "logs/length_counts/{sample}.log",
     conda:
-        "../envs/process_reads.yaml"
+        "../envs/pingpong.yaml"
     shell:
         "awk '{{print length($0)}}' {input.seqs} | "
         "sort | "
