@@ -4,14 +4,12 @@ sink(log, type = "output")
 sink(log, type = "message")
 
 library(Rsamtools)
-library(Biostrings)
 library(dplyr)
 library(ggplot2)
 library(cowplot)
 
 # Inputs from Snakemake
 bam_input <- snakemake@input[["bam"]]
-fasta_file <- snakemake@input[["fasta"]]
 te <- snakemake@wildcards[["te"]]
 out_pdf <- snakemake@output[["pdf"]]
 
@@ -47,14 +45,10 @@ parse_count <- function(qnames) {
   as.integer(sub(".*-(\\d+)$", "\\1", qnames))
 }
 
-# Read sequence length for this TE from FASTA
-print("Reading FASTA...")
-fa <- readDNAStringSet(fasta_file)
-names(fa) <- sub(" .*", "", names(fa))
-seq_len <- width(fa)[names(fa) == te]
-if (length(seq_len) == 0) {
-  stop("No FASTA entry found for TE: ", te)
-}
+# Get TE sequence length from BAM header
+header <- scanBamHeader(bam_input[[1]])
+seq_len <- header[[1]]$targets[[te]]
+if (is.null(seq_len)) stop("No BAM header entry found for TE: ", te)
 
 # Load and merge replicates; keep only FLAG 0 (fwd) and FLAG 16 (rev)
 # Filter to the target TE immediately to reduce memory usage
