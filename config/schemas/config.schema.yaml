@@ -54,7 +54,20 @@ properties:
         type: integer
       extra_args:
         type: string
-    required: ["run_tesmall"]
+      te_classes:
+        description: >
+          TE classes to display in the top-families plot. Use "All" to include
+          every class present in the data, or supply a list of class names from:
+          DNA, LINE, LTR, RC, Retroposon, Satellite, SINE, Unknown, Unspecified.
+        oneOf:
+          - type: string
+            const: "All"
+          - type: array
+            items:
+              type: string
+              enum: ["DNA", "LINE", "LTR", "RC", "Retroposon", "Satellite", "SINE", "Unknown", "Unspecified"]
+            minItems: 1
+    required: ["run_tesmall", "te_classes"]
 
   length_distribution:
     type: object

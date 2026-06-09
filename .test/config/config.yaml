@@ -21,6 +21,9 @@ tesmall:
   maxaln: 100
   mismatch: 0
   extra_args: ""
+  te_classes:
+    - LINE
+    - LTR
 
 # miRNA Bigwig parameters
 bigwig:

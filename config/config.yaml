@@ -21,6 +21,9 @@ tesmall:
   maxaln: 100
   mismatch: 0
   extra_args: ""
+  # TE classes to plot top 10 most abundent members
+  # All, or a list: [LINE, LTR] (DNA/LINE/LTR/RC/Retroposon/Satellite/SINE/Unknown/Unspecified)
+  te_classes: All
 
 length_distribution:
   apply_mirna_correction: True # False will total count normalise

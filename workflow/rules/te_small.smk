@@ -93,6 +93,24 @@ rule te_small_bargraph:
         "../scripts/te_small_bargraph.R"
 
 
+# Bar graph of top TE subfamilies per class (All vs antisense piRNAs)
+# --------------------------------------------------------
+rule te_small_top_families:
+    input:
+        txt=expand("results/te_small/{sample}/count_summary.txt", sample=SAMPLES),
+    output:
+        pdf="results/plots/te_small/te_top_families.pdf",
+    params:
+        n_top=10,  # top N subfamilies per TE class
+        te_classes=config["tesmall"]["te_classes"],
+    log:
+        "logs/te_small/te_top_families.log",
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/te_small_top_families.R"
+
+
 # Stacked bar of TE class composition of piRNAs per condition
 # --------------------------------------------------------
 rule te_small_stacked_bar_te:
