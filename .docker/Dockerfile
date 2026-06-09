@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="bab96c894ace999ad0304674740f6eb856e93e247ba8ff4c5b72d753a311e270"
+LABEL io.github.snakemake.conda_env_hash="0a03167f039071f45d158a4db4b570fafcde3e5274c3c631415e14f238d75779"
 
 # Step 2: Retrieve conda environments
 
@@ -68,21 +68,6 @@ RUN mkdir -p /conda-envs/03d5424c620255c2c4b5db4e7d3a747f
 COPY workflow/envs/pingpong.yaml /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/environment.yaml
 
 # Conda environment:
-#   source: workflow/envs/process_reads.yaml
-#   prefix: /conda-envs/01ea981e63e66e6a34e85f55e825d6be
-#   name: process_reads
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - nodefaults
-#   dependencies:
-#     - bioconda::cutadapt=5.2
-#     - bioconda::seqkit=2.12.0
-#     - bioconda::bowtie2=2.5.4
-RUN mkdir -p /conda-envs/01ea981e63e66e6a34e85f55e825d6be
-COPY workflow/envs/process_reads.yaml /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml
-
-# Conda environment:
 #   source: workflow/envs/te_small.yaml
 #   prefix: /conda-envs/601a390285cf905b130f31f8ddea6719
 #   name: te_small
@@ -101,6 +86,5 @@ RUN conda env create --prefix /conda-envs/24864fe2fb080d68e0e41c2f30a1cb32 --fil
     conda env create --prefix /conda-envs/971e30874532c7c91e6494d19e958a88 --file /conda-envs/971e30874532c7c91e6494d19e958a88/environment.yaml && \
     conda env create --prefix /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a --file /conda-envs/31587b3fe7b9a9a83f6535a9c0a00f2a/environment.yaml && \
     conda env create --prefix /conda-envs/03d5424c620255c2c4b5db4e7d3a747f --file /conda-envs/03d5424c620255c2c4b5db4e7d3a747f/environment.yaml && \
-    conda env create --prefix /conda-envs/01ea981e63e66e6a34e85f55e825d6be --file /conda-envs/01ea981e63e66e6a34e85f55e825d6be/environment.yaml && \
     conda env create --prefix /conda-envs/601a390285cf905b130f31f8ddea6719 --file /conda-envs/601a390285cf905b130f31f8ddea6719/environment.yaml && \
     conda clean --all -y

@@ -8,9 +8,9 @@ These images are shared via [Docker Hub](https://hub.docker.com/repository/docke
 
 ```shell
 $ snakemake --containerize > Dockerfile
-$ docker build -t niekwit/smallrna-seq:v0.3.0 .
+$ docker build -t niekwit/smallrna-seq:v0.5.0 .
 $ docker login
-$ docker push niekwit/smallrna-seq:v0.3.0
+$ docker push niekwit/smallrna-seq:v0.5.0
 ```
 
 When `Snakemake` is run with `--use-apptainer True`, the workflow will automatically pull the latest image from Docker Hub and convert it to an Apptainer image on the fly.
