@@ -207,7 +207,7 @@ p_bar <- ggplot(
 ggsave(
   filename = bar_pdf,
   plot = p_bar,
-  width = 4,
+  width = 8,
   height = 8
 )
 
