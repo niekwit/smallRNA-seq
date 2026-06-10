@@ -195,7 +195,7 @@ p_bar <- ggplot(
   ) +
   facet_wrap(
     ~Position,
-    ncol = 1,
+    ncol = 2,
     labeller = labeller(
       Position = c(
         "1" = "Position 1 (antisense)",
