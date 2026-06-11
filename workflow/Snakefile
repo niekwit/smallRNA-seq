@@ -69,14 +69,12 @@ TARGETS = [
     "results/plots/pingpong.csv",
     "results/plots/rna_counts.pdf",
     expand(
-        "results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
+        "results/plots/pirna_sequence_bias/{te}_logo.pdf",
         te=TE,
-        comparison=COMPARISONS,
     ),
     expand(
-        "results/plots/pirna_sequence_bias/{te}/{comparison}_bargraph.pdf",
+        "results/plots/pirna_sequence_bias/{te}_bargraph.pdf",
         te=TE,
-        comparison=COMPARISONS,
     ),
     expand(
         "results/plots/te_pos_coverage/{te}.pdf",

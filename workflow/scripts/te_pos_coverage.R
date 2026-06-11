@@ -106,5 +106,5 @@ p <- ggplot(
   theme_cowplot(12) +
   theme(legend.position = "none")
 
-ggsave(out_pdf, p, width = 10, height = 5)
+ggsave(out_pdf, p, width = 10, height = length(conditions) * 2.5)
 print("Done.")

@@ -24,7 +24,11 @@ df <- data.frame(
 for (count_file in count_files) {
   sample <- basename(count_file) %>% str_replace(".csv$", "")
   condition <- snakemake@config$samples[[sample]]
-  temp_df <- read_delim(count_file) %>%
+  temp_df <- read_delim(
+    count_file,
+    show_col_types = FALSE,
+    col_types = cols(distance = col_double(), count = col_double())
+  ) %>%
     group_by(repeat_id, sample) %>%
     mutate(
       condition = condition,
@@ -56,7 +60,10 @@ conditions <- unique(df$condition)
 if (length(conditions) == 2) {
   colours <- c("#cccccc", "#dd3b3b")
 } else {
-  colours <- RColorBrewer::brewer.pal(n = length(conditions), name = "Set3")
+  colours <- c(
+    "#cccccc",
+    RColorBrewer::brewer.pal(n = length(conditions) - 1, name = "Set1")
+  )
 }
 
 # Set factor levels for conditions

@@ -27,15 +27,30 @@ rule te_small:
         "../scripts/te_small.py"
 
 
-# Differential expression analysis with DESeq2
+# Build DESeq2 object from all samples/conditions (used by PCA and per-comparison analysis)
 # --------------------------------------------------------
-rule deseq2:
+rule deseq2_full:
     input:
         txt=expand("results/te_small/{sample}/count_summary.txt", sample=SAMPLES),
     output:
+        rds="results/deseq2/dds_full.rds",
+    log:
+        "logs/te_small/deseq2_full.log",
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/deseq2_full.R"
+
+
+# Per-comparison differential expression analysis with DESeq2
+# --------------------------------------------------------
+rule deseq2:
+    input:
+        dds_full="results/deseq2/dds_full.rds",
+    output:
         pdf="results/plots/{comparison}/volcano_plot.pdf",
         csv="results/plots/{comparison}/results.csv",
-        rds="results/deseq2/{comparison}/dds.rds",
+        dds="results/deseq2/{comparison}/dds.rds",
     log:
         "logs/te_small/deseq2_{comparison}.log",
     conda:
@@ -44,11 +59,11 @@ rule deseq2:
         "../scripts/deseq2.R"
 
 
-# Plot PCA of DESeq2 results
+# Plot PCA of DESeq2 results (all conditions)
 # --------------------------------------------------------
 rule plot_pca:
     input:
-        rds=expand("results/deseq2/{comparison}/dds.rds", comparison=COMPARISONS[0]),
+        rds="results/deseq2/dds_full.rds",
     output:
         pdf="results/plots/pca_plot.pdf",
     log:

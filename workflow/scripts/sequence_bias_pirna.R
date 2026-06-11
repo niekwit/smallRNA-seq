@@ -11,16 +11,16 @@ library(cowplot)
 # Get data
 bam_files <- snakemake@input[["bam"]]
 nt_bias_files <- snakemake@input[["nt_bias"]]
-comparison <- snakemake@wildcards[["comparison"]]
-reference_condition <- str_split(comparison, "_vs_")[[1]][2]
-test_condition <- str_split(comparison, "_vs_")[[1]][1]
 te <- snakemake@wildcards[["te"]]
 all_samples <- snakemake@config$samples
+reference_condition <- snakemake@config$reference_condition
+other_conditions <- setdiff(unique(unlist(all_samples)), reference_condition)
+conditions <- c(reference_condition, other_conditions)
 
 sequence_lists <- list()
 
 # Read sequences for sequence logo
-for (condition in c(reference_condition, test_condition)) {
+for (condition in conditions) {
   # Get sample names for this condition from Snakemake config
   samples <- names(all_samples)[all_samples == condition]
 
@@ -97,34 +97,24 @@ for (condition in c(reference_condition, test_condition)) {
   )
 }
 
-# Generate sequence logos: 2 conditions x 2 strands = 4 plots arranged
-# in a 2x2 grid (columns = conditions, rows = sense / antisense).
+# Generate sequence logos: N conditions x 2 strands arranged in a grid
+# (columns = conditions, rows = sense / antisense).
 make_logo <- function(seqs, title) {
   ggseqlogo(seqs, method = "bits", seq_type = "rna") +
     ggtitle(title)
 }
 
-logo_plots <- list(
-  make_logo(
-    sequence_lists[[reference_condition]]$sense,
-    paste0(reference_condition, "\nsense")
-  ),
-  make_logo(
-    sequence_lists[[test_condition]]$sense,
-    paste0(test_condition, "\nsense")
-  ),
-  make_logo(
-    sequence_lists[[reference_condition]]$antisense,
-    paste0(reference_condition, "\nantisense")
-  ),
-  make_logo(
-    sequence_lists[[test_condition]]$antisense,
-    paste0(test_condition, "\nantisense")
-  )
-)
+n_conditions <- length(conditions)
+sense_logos <- lapply(conditions, function(cond) {
+  make_logo(sequence_lists[[cond]]$sense, paste0(cond, "\nsense"))
+})
+antisense_logos <- lapply(conditions, function(cond) {
+  make_logo(sequence_lists[[cond]]$antisense, paste0(cond, "\nantisense"))
+})
+logo_plots <- c(sense_logos, antisense_logos)
 
-pdf(file = snakemake@output[["logo"]])
-gridExtra::grid.arrange(grobs = logo_plots, ncol = 2)
+pdf(file = snakemake@output[["logo"]], width = 3 * n_conditions, height = 6)
+gridExtra::grid.arrange(grobs = logo_plots, ncol = n_conditions)
 dev.off()
 
 # Build a sample -> condition lookup from config
@@ -137,7 +127,12 @@ sample_to_condition <- setNames(
 # compute per-condition nucleotide frequencies at:
 #   position 1  -> antisense read position 1
 #   position 10 -> sense read position 10
-freq_df <- lapply(nt_bias_files, read_csv, show_col_types = FALSE) |>
+freq_df <- lapply(
+  nt_bias_files,
+  read_csv,
+  show_col_types = FALSE,
+  col_types = cols(count = col_double())
+) |>
   bind_rows() |>
   filter(repeat_id == te) |>
   mutate(
@@ -145,17 +140,13 @@ freq_df <- lapply(nt_bias_files, read_csv, show_col_types = FALSE) |>
     Nucleotide = str_replace_all(nucleotide, "T", "U"),
     Position = ifelse(strand == "antisense", "1", "10")
   ) |>
-  filter(Condition %in% c(reference_condition, test_condition)) |>
   group_by(Condition, Position, Nucleotide) |>
   summarise(count = sum(count), .groups = "drop") |>
   group_by(Condition, Position) |>
   mutate(Frequency = count / sum(count)) |>
   ungroup() |>
   mutate(
-    Condition = factor(
-      Condition,
-      levels = c(reference_condition, test_condition)
-    ),
+    Condition = factor(Condition, levels = conditions),
     Nucleotide = factor(Nucleotide, levels = c("C", "A", "G", "U")),
     Position = factor(Position, levels = c("1", "10")),
     te = te

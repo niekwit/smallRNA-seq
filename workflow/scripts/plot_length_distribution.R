@@ -130,7 +130,10 @@ df$condition <- factor(df$condition, levels = new_levels)
 if (length(conditions) == 2) {
   colours <- c("#cccccc", "#dd3b3b")
 } else {
-  colours <- RColorBrewer::brewer.pal(n = length(conditions), name = "Set3")
+  colours <- c(
+    "#cccccc",
+    RColorBrewer::brewer.pal(n = length(conditions) - 1, name = "Set1")
+  )
 }
 
 # Create bar plot with error bars

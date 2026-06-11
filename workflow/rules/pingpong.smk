@@ -306,12 +306,12 @@ rule plot_sequence_bias_pirna:
         bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
         nt_bias=expand("results/pingpong/{sample}_nt_bias.csv", sample=SAMPLES),
     output:
-        logo="results/plots/pirna_sequence_bias/{te}/{comparison}_logo.pdf",
-        bar="results/plots/pirna_sequence_bias/{te}/{comparison}_bargraph.pdf",
-        csv="results/plots/pirna_sequence_bias/{te}/{comparison}_frequencies.csv",
+        logo="results/plots/pirna_sequence_bias/{te}_logo.pdf",
+        bar="results/plots/pirna_sequence_bias/{te}_bargraph.pdf",
+        csv="results/plots/pirna_sequence_bias/{te}_frequencies.csv",
     threads: 2
     log:
-        "logs/pingpong/{te}_plot_sequence_bias_{comparison}.log",
+        "logs/pingpong/{te}_plot_sequence_bias.log",
     conda:
         "../envs/R.yaml"
     script:
