@@ -4,7 +4,7 @@
 [![Tests](https://github.com/niekwit/smallRNA-seq/actions/workflows/main.yaml/badge.svg)](https://github.com/niekwit/smallRNA-seq/actions/workflows/main.yaml)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![workflow catalog](https://img.shields.io/badge/Snakemake%20workflow%20catalog-darkgreen)](https://snakemake.github.io/snakemake-workflow-catalog/docs/workflows/niekwit/smallRNA-seq)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20529122.svg)](https://doi.org/10.5281/zenodo.20529122)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19258358.svg)](https://doi.org/10.5281/zenodo.19258358)
 
 A Snakemake workflow for `smallRNA-seq` analysis.
 
@@ -47,6 +47,7 @@ Prepare your analysis directory as follows:
     │   ├── pingpong.smk
     │   └── te_small.smk
     ├── scripts
+    │   ├── deseq2_full.R
     │   ├── deseq2.R
     │   ├── pingpong.py
     │   ├── plot_length_distribution.R
@@ -58,10 +59,11 @@ Prepare your analysis directory as follows:
     │   ├── te_small_bargraph.R
     │   ├── te_small.py
     │   ├── te_small_piechart.R
-    │   └── te_small_stacked_bar_te.R
+    │   ├── te_small_stacked_bar_te.R
+    │   └── te_small_top_families.R
     └── Snakefile
 
-12 directories, 31 files
+12 directories, 33 files
 ```
 
 The workflow and config directories can be copied from this repository.
@@ -92,6 +94,9 @@ tesmall:
   maxaln: 100
   mismatch: 0
   extra_args: ""
+  # TE classes to include in top-families plot
+  # Use "All" or a list: [DNA, LINE, LTR, RC, Retroposon, Satellite, SINE, Unknown, Unspecified]
+  te_classes: All
 
 length_distribution:
   apply_mirna_correction: TRUE
@@ -313,10 +318,9 @@ results/
 │   ├── pingpong.csv
 │   ├── pingpong.pdf
 │   ├── pirna_sequence_bias
-│   │   └── L1MdTf_III
-│   │       ├── KO_vs_WT_bargraph.pdf
-│   │       ├── KO_vs_WT_frequencies.csv
-│   │       └── KO_vs_WT_logo.pdf
+│   │   ├── L1MdTf_III_bargraph.pdf
+│   │   ├── L1MdTf_III_frequencies.csv
+│   │   └── L1MdTf_III_logo.pdf
 │   ├── rna_counts.pdf
 │   └── te_pos_coverage
 │       └── L1MdTf_III.pdf
@@ -345,7 +349,7 @@ results/
 
 If you find this workflow useful, please consider citing it:
 
-> Niek Wit. (2026). niekwit/smallRNA-seq: v0.3.0 (v0.3.0). Zenodo. https://doi.org/10.5281/zenodo.20529122
+> Niek Wit. (2026). niekwit/smallRNA-seq: v0.4.0 (v0.4.0). Zenodo. https://doi.org/10.5281/zenodo.19258358
 
 ## References
 
