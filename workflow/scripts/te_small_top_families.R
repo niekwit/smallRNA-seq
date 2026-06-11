@@ -115,12 +115,12 @@ df_filtered <- df_filtered %>%
   left_join(order_df, by = c("Class", "Subfamily")) %>%
   mutate(Subfamily = reorder_within(Subfamily, -order_val, Class))
 
-if (length(condition_levels) == 2) {
-  colours <- setNames(c("#cccccc", "#dd3b3b"), condition_levels)
+if (length(conditions) == 2) {
+  colours <- c("#cccccc", "#dd3b3b")
 } else {
-  colours <- setNames(
-    RColorBrewer::brewer.pal(n = length(condition_levels), name = "Set3"),
-    condition_levels
+  colours <- c(
+    "#cccccc",
+    RColorBrewer::brewer.pal(n = length(conditions) - 1, name = "Set1")
   )
 }
 
