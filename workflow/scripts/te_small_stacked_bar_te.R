@@ -105,6 +105,6 @@ p <- ggplot(
 ggsave(
   filename = snakemake@output[["pdf"]],
   plot = p,
-  width = 3.5,
+  width = max(3.5, length(c(reference_condition, other_conditions)) * 1.75),
   height = 6
 )
