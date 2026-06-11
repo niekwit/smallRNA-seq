@@ -44,3 +44,6 @@ pingpong:
   mismatch: 3
   fasta: resources/L1mTf.fa
   window: 30
+  plot:
+    type: line # line or bar
+    bar_position: grouped # grouped or overlap (bar only)

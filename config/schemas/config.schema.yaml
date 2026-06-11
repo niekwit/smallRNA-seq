@@ -138,7 +138,26 @@ properties:
       window:
         type: integer
         description: Analysis window size for ping-pong overlap distances.
-    required: ["fasta", "window"]
+      plot:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: ["line", "bar"]
+            description: Plot type for ping-pong distance data.
+          bar_position:
+            type: string
+            enum: ["grouped", "overlap"]
+            description: Bar positioning when type is "bar". grouped uses dodged bars; overlap uses identity positioning with transparency.
+        required: ["type"]
+        if:
+          properties:
+            type:
+              const: "bar"
+          required: ["type"]
+        then:
+          required: ["bar_position"]
+    required: ["fasta", "window", "plot"]
 
 required:
   - genome
