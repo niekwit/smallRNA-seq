@@ -47,3 +47,49 @@ pingpong:
   plot:
     type: line # line or bar
     bar_position: grouped # grouped or overlap (bar only)
+
+# Integration with NGS Tracker for workflow registration and file attachment
+# https://github.com/niekwit/ngs-tracker
+ngs_tracker:
+  enabled: false # set to true to enable registration
+
+  # Connection
+  base_url: "http://127.0.0.1:5000/api" # change host/port if needed
+
+  # Run identity  (find project_id on the project detail page)
+  project_id: 3
+  #run_id: 1 # optional, if not provided a new run will be created
+  workflow_name: "smallRNA-seq"
+  workflow_tag: "v0.5.0"
+  workflow_system: "snakemake" # snakemake | nextflow | cwl | other
+  description: "smallRNA-seq"
+  tags:
+    - Test
+
+  # Files to attach — paths relative to the working directory or absolute
+  # type: config | sample_info | qc | results | mapping_rates | other
+  files:
+    - path: "config/config.yaml"
+      type: config
+      description: "Workflow config"
+    - path: "results/plots/pca_plot.pdf"
+      type: qc
+      description: "PCA plot"
+    - path: "results/plots/length_distribution*.pdf"
+      type: results
+      description: "Length distribution"
+    - path: "results/plots/pingpong.pdf"
+      type: results
+      description: "Ping-pong plot"
+    - path: "results/plots/rna_counts.pdf"
+      type: qc
+      description: "rRNA/miRNA counts per sample"
+    - path: "results/plots/te_small/*.pdf"
+      type: results
+      description: "TE small"
+    - path: "results/plots/te_pos_coverage/*.pdf"
+      type: results
+      description: "5'end position coverage"
+    - path: "results/plots/pirna_sequence_bias/*.pdf"
+      type: results
+      description: "piRNA 1U/10A sequence bias"
