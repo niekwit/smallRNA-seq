@@ -132,6 +132,7 @@ rule download_mirna_fasta:
     params:
         url="https://www.mirbase.org/download/hairpin.fa",
         url_ftp="ftp://mirbase.org/pub/mirbase/CURRENT/hairpin.fa.gz",
+        url_bundled="https://github.com/niekwit/smallRNA-seq/raw/refs/heads/main/mirhairpin.fa",
     log:
         "logs/download_mirna.log",
     conda:
@@ -140,7 +141,9 @@ rule download_mirna_fasta:
         "timeout 15 wget -nv -O {output.fasta} {params.url} > {log} 2>&1 || "
         "(echo 'HTTPS failed, trying FTP fallback...' >> {log} && "
         "timeout 15 wget -nv -O - {params.url_ftp} 2>> {log} | gunzip > {output.fasta}) || "
-        "(echo 'Both downloads failed. Please download hairpin.fa manually from https://mirbase.org or ftp://mirbase.org/pub/mirbase/CURRENT/hairpin.fa.gz and place it at {output.fasta}' >> {log} && exit 1)"
+        "(echo 'FTP failed, using bundled fallback from GitHub...' >> {log} && "
+        "timeout 30 wget -nv -O {output.fasta} {params.url_bundled} >> {log} 2>&1) || "
+        "(echo 'All downloads failed. Please download hairpin.fa manually from https://mirbase.org and place it at {output.fasta}' >> {log} && exit 1)"
 
 
 rule subset_mirna_fasta:
