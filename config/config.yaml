@@ -93,3 +93,5 @@ ngs_tracker:
     - path: "results/plots/pirna_sequence_bias/*.pdf"
       type: results
       description: "piRNA 1U/10A sequence bias"
+    - path: logs/snakemake/*.log
+      type: snakemake_log
