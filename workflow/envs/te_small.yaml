@@ -4,4 +4,4 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - bioconda::tesmall=2.0.9
+  - bioconda::tesmall=2.1.0
