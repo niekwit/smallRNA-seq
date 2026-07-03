@@ -6,12 +6,12 @@ rule trim_adapters:
     output:
         fastq=temp("results/trimmed/{sample}.fastq.gz"),
         qc="results/trimmed/{sample}_qc.txt",
-    params:
-        adapters=f"-a {config['cutadapt']['adapter']}",
-        extra=config["cutadapt"]["extra"],
     log:
         "logs/cutadapt/{sample}.log",
     threads: 4
+    params:
+        adapters=f"-a {config['cutadapt']['adapter']}",
+        extra=config["cutadapt"]["extra"],
     wrapper:
         "v7.9.0/bio/cutadapt/se"
 
@@ -64,3 +64,22 @@ rule plot_length_distribution:
         "../envs/R.yaml"
     script:
         "../scripts/plot_length_distribution.R"
+
+
+# Plot length distribution of small RNAs from TEsmall output
+# -----------------------------------------------------
+rule plot_length_distribution_tesmall:
+    input:
+        rlen_info=expand(
+            "results/te_small/{sample}/{sample}.anno.rlen.info",
+            sample=SAMPLES,
+        ),
+    output:
+        pdf="results/plots/length_distribution_tesmall.pdf",
+        csv="results/plots/length_distribution_tesmall.csv",
+    log:
+        "logs/plot_length_distribution_tesmall.log",
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/plot_length_distribution_tesmall.R"
