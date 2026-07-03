@@ -52,6 +52,11 @@ def comparisons(config):
     return [f"{cond}_vs_{reference_condition}" for cond in other_conditions]
 
 
+def conditions(config):
+    samples_dict = config["samples"]
+    return list(set(samples_dict.values()))
+
+
 def te(config):
 
     fasta_file = config["pingpong"]["fasta"]

@@ -5,11 +5,11 @@ rule collapse_sequences:
         fastq="results/trimmed/{sample}.fastq.gz",
     output:
         fasta="results/fasta/{sample}.collapsed.fasta",
-    threads: 2
     log:
         "logs/pingpong/{sample}_collapse.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 2
     shell:
         "zcat {input.fastq} | fastx_collapser -o {output.fasta} {log}"
 
@@ -19,13 +19,13 @@ rule collapse_sequences:
 rule download_ncrna_fasta:
     output:
         fa=f"resources/ncrna/{GENOME}.ncrna.fa.gz",
-    params:
-        url=NCRNA_URL,
-    retries: 3
     log:
         f"logs/ncrna/download.log",
+    retries: 3
     conda:
         "../envs/pingpong.yaml"
+    params:
+        url=NCRNA_URL,
     shell:
         "wget -q -O {output.fa} {params.url} 2> {log}"
 
@@ -61,15 +61,15 @@ rule bowtie_index_rrna:
         fa=f"resources/ncrna/{GENOME}.rrna.fa",
     output:
         index_files=expand(f"resources/bowtie1_index/rrna_{GENOME}.{{ext}}", ext=EXT),
-    params:
-        index_prefix=lambda wildcards, output: output.index_files[0].replace(
-            ".1.ebwt", ""
-        ),
-    threads: 1
     log:
         f"logs/ncrna/bowtie_index.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 1
+    params:
+        index_prefix=lambda wildcards, output: output.index_files[0].replace(
+            ".1.ebwt", ""
+        ),
     shell:
         "bowtie-build {input.fa} {params.index_prefix} > {log} 2>&1"
 
@@ -86,15 +86,15 @@ rule remove_rrna_reads:
         un_fasta="results/fasta/{sample}.rrna_removed.fasta",
         al_fasta="results/rrna/{sample}.fasta",
         bam="results/rrna/{sample}.bam",
-    params:
-        index_prefix=lambda wildcards, input: input.index_files[0].replace(
-            ".1.ebwt", ""
-        ),
-    threads: 4
     log:
         "logs/rrna/{sample}_filter_reads.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 4
+    params:
+        index_prefix=lambda wildcards, input: input.index_files[0].replace(
+            ".1.ebwt", ""
+        ),
     shell:
         "bowtie "
         "-f --sam "
@@ -129,14 +129,14 @@ rule plot_rna_counts:
 rule download_mirna_fasta:
     output:
         fasta="resources/mirhairpin.fa",
-    params:
-        url="https://www.mirbase.org/download/hairpin.fa",
-        url_ftp="ftp://mirbase.org/pub/mirbase/CURRENT/hairpin.fa.gz",
-        url_bundled="https://github.com/niekwit/smallRNA-seq/raw/refs/heads/main/mirhairpin.fa",
     log:
         "logs/download_mirna.log",
     conda:
         "../envs/pingpong.yaml"
+    params:
+        url="https://www.mirbase.org/download/hairpin.fa",
+        url_ftp="ftp://mirbase.org/pub/mirbase/CURRENT/hairpin.fa.gz",
+        url_bundled="https://github.com/niekwit/smallRNA-seq/raw/refs/heads/main/mirhairpin.fa",
     shell:
         "timeout 15 wget -nv -O {output.fasta} {params.url} > {log} 2>&1 || "
         "(echo 'HTTPS failed, trying FTP fallback...' >> {log} && "
@@ -151,12 +151,12 @@ rule subset_mirna_fasta:
         fasta="resources/mirhairpin.fa",
     output:
         fasta=f"resources/mirhairpin_{MIRBASE_GENOME}.fa",
-    params:
-        genome=MIRBASE_GENOME.replace("_", " "),
     log:
         f"logs/seqkit_{MIRBASE_GENOME}.log",
     conda:
         "../envs/pingpong.yaml"
+    params:
+        genome=MIRBASE_GENOME.replace("_", " "),
     shell:
         "seqkit grep -n -r -p '{params.genome}' {input.fasta} > {output.fasta} 2> {log}"
 
@@ -182,14 +182,14 @@ rule remove_mirna_reads:
         mirna="results/mirna/{sample}.fasta",
         mirna_bam="results/mirna/{sample}.bam",
         filtered="results/fasta/{sample}.rrna_mirna_removed.fasta",
-    params:
-        index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
-        mismatch=1,
-    threads: 4
     log:
         "logs/mirna_correction/{sample}_count.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 4
+    params:
+        index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
+        mismatch=1,
     shell:
         # mapping parameters based on:
         # https://www.nature.com/articles/s41467-023-42787-1
@@ -222,15 +222,15 @@ rule bowtie_index:
         fasta=config["pingpong"]["fasta"],
     output:
         index_files=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT),
-    params:
-        index_prefix=lambda wildcards, output: output.index_files[0].replace(
-            ".1.ebwt", ""
-        ),
-    threads: 1
     log:
         "logs/bowtie/pingpong.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 1
+    params:
+        index_prefix=lambda wildcards, output: output.index_files[0].replace(
+            ".1.ebwt", ""
+        ),
     shell:
         "bowtie-build {input.fasta} resources/bowtie1_index/pingpong {log}"
 
@@ -245,14 +245,14 @@ rule align:
         index=expand("resources/bowtie1_index/pingpong.{ext}", ext=EXT),
     output:
         bam="results/pingpong/{sample}.bam",
-    params:
-        index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
-        mismatch=config["pingpong"]["mismatch"],
-    threads: 4
     log:
         "logs/pingpong/{sample}_align.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 4
+    params:
+        index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
+        mismatch=config["pingpong"]["mismatch"],
     shell:
         "bowtie "
         "-f --sam "
@@ -274,13 +274,13 @@ rule pingpong_analysis:
     output:
         pingpong="results/pingpong/{sample}.csv",
         nt_bias="results/pingpong/{sample}_nt_bias.csv",
-    params:
-        window=config["pingpong"]["window"],
-    threads: 2
     log:
         "logs/pingpong/{sample}_analysis.log",
     conda:
         "../envs/pingpong.yaml"
+    threads: 2
+    params:
+        window=config["pingpong"]["window"],
     script:
         "../scripts/pingpong.py"
 
@@ -293,11 +293,11 @@ rule plot_pingpong:
     output:
         pdf="results/plots/pingpong.pdf",
         csv="results/plots/pingpong.csv",
-    threads: 1
     log:
         "logs/pingpong/plot_pingpong.log",
     conda:
         "../envs/R.yaml"
+    threads: 1
     script:
         "../scripts/plot_pingpong.R"
 
@@ -312,11 +312,11 @@ rule plot_sequence_bias_pirna:
         logo="results/plots/pirna_sequence_bias/{te}_logo.pdf",
         bar="results/plots/pirna_sequence_bias/{te}_bargraph.pdf",
         csv="results/plots/pirna_sequence_bias/{te}_frequencies.csv",
-    threads: 2
     log:
         "logs/pingpong/{te}_plot_sequence_bias.log",
     conda:
         "../envs/R.yaml"
+    threads: 2
     script:
         "../scripts/sequence_bias_pirna.R"
 
@@ -328,29 +328,136 @@ rule te_pos_coverage:
         bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
     output:
         pdf="results/plots/te_pos_coverage/{te}.pdf",
-    threads: 2
     log:
         "logs/pingpong/{te}_te_pos_coverage.log",
     conda:
         "../envs/R.yaml"
+    threads: 2
     script:
         "../scripts/te_pos_coverage.R"
 
 
-"""
-# Get length distribution of TE-aligned reads
-# ------------------------------------------------------------
-rule length_distribution_aligned_to_TE:
+rule expand_collapsed_bam:
     input:
-        bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
+        bam="results/pingpong/{sample}.bam",
     output:
-        pdf="results/plots/length_distribution.pdf",
-        csv="results/plots/length_distribution.csv"
-    threads: 1
+        expanded_bam="results/pingpong/{sample}.expanded.bam",
     log:
-        "logs/pingpong/length_distribution.log"
+        "logs/pingpong/{sample}_expand_bam.log",
     conda:
-        "../envs/R.yaml"
+        "../envs/pingpong.yaml"
+    threads: 2
     script:
-        "../scripts/length_distribution.R"
-"""
+        "../scripts/expand_collapsed_bam.py"
+
+
+rule index_expanded_bam:
+    input:
+        expanded_bam="results/pingpong/{sample}.expanded.bam",
+    output:
+        bai="results/pingpong/{sample}.expanded.bam.bai",
+    log:
+        "logs/pingpong/{sample}_index_expanded_bam.log",
+    conda:
+        "../envs/pingpong.yaml"
+    threads: 2
+    shell:
+        "samtools index {input.expanded_bam} 2> {log}"
+
+
+rule fwd_strand_bigwig:
+    input:
+        bam="results/pingpong/{sample}.expanded.bam",
+        bai="results/pingpong/{sample}.expanded.bam.bai",
+    output:
+        bigwig="results/te_bigwig/{sample}_fwd.bw",
+    log:
+        "logs/pingpong/{sample}_fwd_bigwig.log",
+    conda:
+        "../envs/deeptools.yaml"
+    threads: 2
+    params:
+        bin_size=config["bigwig"]["bin_size"],
+        normalise=config["bigwig"]["normalize_using"],
+        strand="--samFlagExclude 16",
+        scale_factor="",
+    shell:
+        "bamCoverage "
+        "--bam {input.bam} "
+        "--outFileName {output.bigwig} "
+        "--binSize {params.bin_size} "
+        "--normalizeUsing {params.normalise} "
+        "{params.strand} "
+        "{params.scale_factor} "
+        "--numberOfProcessors {threads} 2> {log}"
+
+
+use rule fwd_strand_bigwig as fwd_strand_bigwig_all with:
+    output:
+        bigwig="results/te_bigwig/{sample}_rev.bw",
+    log:
+        "logs/pingpong/{sample}_rev_bigwig.log",
+    params:
+        bin_size=config["bigwig"]["bin_size"],
+        normalise=config["bigwig"]["normalize_using"],
+        strand="--samFlagInclude 16",
+        scale_factor="--scaleFactor -1",
+
+
+rule average_fwd_strand_bigwig:
+    input:
+        bigwig=lambda wildcards: expand(
+            "results/te_bigwig/{sample}_{strand}.bw",
+            sample=[s for s in SAMPLES if config["samples"][s] == wildcards.condition],
+            strand="fwd",
+        ),
+    output:
+        bigwig="results/te_bigwig/{condition}_average_fwd.bw",
+    log:
+        "logs/pingpong/average_fwd_bigwig_{condition}.log",
+    conda:
+        "../envs/deeptools.yaml"
+    threads: 4
+    shell:
+        "bigwigAverage "
+        "-b {input.bigwig} "
+        "-o {output.bigwig} "
+        "--numberOfProcessors {threads} 2> {log}"
+
+
+use rule average_fwd_strand_bigwig as average_rev_strand_bigwig with:
+    input:
+        bigwig=lambda wildcards: expand(
+            "results/te_bigwig/{sample}_{strand}.bw",
+            sample=[s for s in SAMPLES if config["samples"][s] == wildcards.condition],
+            strand="rev",
+        ),
+    output:
+        bigwig="results/te_bigwig/{condition}_average_rev.bw",
+    log:
+        "logs/pingpong/average_rev_bigwig_{condition}.log",
+
+
+rule te_tracks:
+    input:
+        fwd_bw=expand(
+            "results/te_bigwig/{condition}_average_fwd.bw", condition=CONDITIONS
+        ),
+        rev_bw=expand(
+            "results/te_bigwig/{condition}_average_rev.bw", condition=CONDITIONS
+        ),
+        te_fasta=config["pingpong"]["fasta"],
+    output:
+        pdf=expand("results/plots/te_tracks/{te}.pdf", te=TE),
+        ini=expand("results/plots/te_tracks/{te}.ini", te=TE),
+    log:
+        script="logs/pingpong/te_tracks.log",
+        stdout="logs/pingpong/te_tracks.out",
+    conda:
+        "../envs/deeptools.yaml"
+    threads: 1
+    params:
+        width=15,
+        conditions=CONDITIONS,
+    script:
+        "../scripts/pygenometracks.py"
