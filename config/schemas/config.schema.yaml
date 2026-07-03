@@ -164,3 +164,8 @@ required:
   - release
   - samples
   - reference_condition
+  - cutadapt
+  - tesmall
+  - length_distribution
+  - bigwig
+  - pingpong
