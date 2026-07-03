@@ -27,6 +27,7 @@ tesmall:
 
 # miRNA Bigwig parameters
 bigwig:
+  bin_size: 10
   read_length: 50 # used to select effective genome size for bamCoverage
   normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
   extra: "" # additional bamCoverage arguments
