@@ -130,6 +130,8 @@ if config["tesmall"]["run_tesmall"]:
                 "results/bigwig/mirna_{condition}_average.bw",
                 condition=set(config["samples"].values()),
             ),
+            "results/plots/length_distribution_tesmall.pdf",
+            "results/plots/length_distribution_tesmall.csv",
         ]
     )
 
