@@ -380,6 +380,7 @@ rule fwd_strand_bigwig:
         normalise=config["bigwig"]["normalize_using"],
         strand="--samFlagExclude 16",
         scale_factor="",
+        extra=config["bigwig"]["extra"],
     shell:
         "bamCoverage "
         "--bam {input.bam} "
@@ -388,6 +389,7 @@ rule fwd_strand_bigwig:
         "--normalizeUsing {params.normalise} "
         "{params.strand} "
         "{params.scale_factor} "
+        "{params.extra} "
         "--numberOfProcessors {threads} 2> {log}"
 
 
