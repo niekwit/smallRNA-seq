@@ -129,7 +129,8 @@ if (plot_type == "line") {
         ymin = fraction_per_condition - sd_fraction_condition,
         ymax = fraction_per_condition + sd_fraction_condition
       ),
-      width = 0.2,
+      width = 0.4,
+      linewidth = 0.5,
       color = "black",
       position = position_spec
     ) +
