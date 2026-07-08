@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import pyBigWig
 from Bio import SeqIO
@@ -30,6 +31,14 @@ ref_condition = snakemake.config["reference_condition"]
 
 # Order the conditions so that the reference condition is first
 ordered_conditions = [ref_condition] + [c for c in conditions if c != ref_condition]
+
+# Exact lookups by TE/condition name, rather than substring matching (e.g.
+# "L1MdA_V" is a substring of "L1MdA_VII", which would silently pick the
+# wrong file if matched with a plain `in` check).
+ini_map = {Path(x).stem: x for x in ini_files}
+pdf_map = {Path(x).stem: x for x in pdf_files}
+fwd_bw_map = dict(zip(conditions, fwd_bw))
+rev_bw_map = dict(zip(conditions, rev_bw))
 
 # Load TE sequences from FASTA file
 # and store the length of each TE sequence in a dictionary
@@ -64,13 +73,13 @@ for bw in all_bw:
 for te in te_seq.keys():
     # Create ini file for pyGenomeTracks
     logging.info(f"Creating ini file for TE: {te}")
-    ini = [x for x in ini_files if te in x][0]
+    ini = ini_map[te]
     with open(ini, "w") as f:
         f.write("[x-axis]\n\n")
         for c in conditions:
             for strand in ["fwd", "rev"]:
                 f.write(f"[{c} {strand}]\n")
-                bw_file = [x for x in all_bw if c in x and strand in x][0]
+                bw_file = fwd_bw_map[c] if strand == "fwd" else rev_bw_map[c]
                 f.write(f"file = {bw_file}\n")
                 if strand == "fwd":
                     f.write(f"title = {c}\n")
@@ -88,7 +97,7 @@ for te in te_seq.keys():
 
     # Now run pyGenomeTracks to generate the track image
     logging.info(f"Generating track image for TE: {te}")
-    pdf = [x for x in pdf_files if te in x][0]
+    pdf = pdf_map[te]
     cmd = f"pyGenomeTracks --tracks {ini} --region {te}:1-{te_seq[te]} -o {pdf} --width {width}"
     logging.debug(f"Running command: {cmd}")
     shell(cmd)
