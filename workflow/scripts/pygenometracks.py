@@ -76,7 +76,7 @@ for te in te_seq.keys():
     ini = ini_map[te]
     with open(ini, "w") as f:
         f.write("[x-axis]\n\n")
-        for c in conditions:
+        for c in ordered_conditions:
             for strand in ["fwd", "rev"]:
                 f.write(f"[{c} {strand}]\n")
                 bw_file = fwd_bw_map[c] if strand == "fwd" else rev_bw_map[c]
