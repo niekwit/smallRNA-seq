@@ -69,11 +69,13 @@ def read_count_from_header(read):
 
 # Main ping‑pong computation
 # --------------------------------------------------
-def compute_ping_pong(bam_path, window=30):
+def compute_ping_pong(bam_path, window=30, min_len=None, max_len=None):
     """
     Compute ping‑pong distances and nucleotide bias at distance 10.
 
     window: maximum distance to record (e.g. 30 nt).
+    min_len, max_len: if set, reads outside this length range (inclusive)
+        are excluded from the analysis entirely.
     Returns:
       results:   dict {repeat_id -> Counter(distance)}
       nt_counts: dict {repeat_id -> {"sense": Counter(nt),
@@ -96,9 +98,15 @@ def compute_ping_pong(bam_path, window=30):
     fwd_count = 0
     rev_count = 0
     for read in load_reads(bam_path):
+        seq = read.query_sequence or ""
+
+        if min_len is not None and len(seq) < min_len:
+            continue
+        if max_len is not None and len(seq) > max_len:
+            continue
+
         te_id = read.reference_name
         count = read_count_from_header(read)
-        seq = read.query_sequence or ""
 
         if read_is_sense(read):
             # Sense (+ strand) read: SEQ is stored 5'→3', so seq[9] is
@@ -161,6 +169,8 @@ def compute_ping_pong(bam_path, window=30):
 # --------------------------------------------------
 bam = snakemake.input["bam"]
 window = snakemake.params["window"]
+min_len = snakemake.params["min_len"]
+max_len = snakemake.params["max_len"]
 sample = snakemake.wildcards["sample"]
 out = snakemake.output["pingpong"]
 out_nt_bias = snakemake.output["nt_bias"]
@@ -175,9 +185,11 @@ logging.basicConfig(
 
 # Run ping‑pong analysis
 res, nt_counts, fwd_count, rev_count, total_pairs = compute_ping_pong(
-    bam, window=window
+    bam, window=window, min_len=min_len, max_len=max_len
 )
 
+logging.info(f"Ping-pong analysis completed for sample {sample}")
+logging.info(f"Read length restricted to {min_len}-{max_len} nt")
 logging.info(f"FWD (sense) mapped reads: {fwd_count}")
 logging.info(f"REV (antisense) mapped reads: {rev_count}")
 logging.info(f"Ping-pong pairs analysed (distance <= {window}): {total_pairs}")
