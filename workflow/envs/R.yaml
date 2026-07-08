@@ -12,3 +12,4 @@ dependencies:
   - bioconda::bioconductor-biostrings=2.74.0
   - bioconda::bioconductor-rsamtools=2.22.0
   - conda-forge::r-gridextra=2.3
+  - conda-forge::jq
