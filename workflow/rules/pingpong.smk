@@ -393,7 +393,7 @@ rule fwd_strand_bigwig:
         "--numberOfProcessors {threads} 2> {log}"
 
 
-use rule fwd_strand_bigwig as fwd_strand_bigwig_all with:
+use rule fwd_strand_bigwig as rev_strand_bigwig with:
     output:
         bigwig="results/te_bigwig/{sample}_rev.bw",
     log:
@@ -403,6 +403,7 @@ use rule fwd_strand_bigwig as fwd_strand_bigwig_all with:
         normalise=config["bigwig"]["normalize_using"],
         strand="--samFlagInclude 16",
         scale_factor="--scaleFactor -1",
+        extra=config["bigwig"]["extra"],
 
 
 rule average_fwd_strand_bigwig:
