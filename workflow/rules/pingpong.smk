@@ -258,7 +258,7 @@ rule align:
         "-f --sam "
         "--threads {threads} "
         "-v {params.mismatch} "
-        "-a --best -k 1 "
+        "--best -k 1 "
         "-x {params.index_prefix} "
         "{input.fasta} 2> {log} | "
         "samtools view "
