@@ -42,7 +42,11 @@ bigwig:
   extra: "" # additional bamCoverage arguments
 
 pingpong:
-  mismatch: 3
+  # bowtie alignment parameters for pingpong analysis
+  # Suggested parameters:
+  # --best -k 1 -v 3: Maximizing alignment yield (forces a reported home for every alignable read).
+  # -n 2 -M 1 --best --strata --nomaqround: High-stringency filtering (strictly grouping by mismatch count and catching multi-mappers).
+  bowtie_params: "--best -k 1 -v 3"
   fasta: resources/L1mTf.fa
   window: 30
   plot:

@@ -252,13 +252,12 @@ rule align:
     threads: 4
     params:
         index_prefix=lambda wildcards, input: input.index[0].replace(".1.ebwt", ""),
-        mismatch=config["pingpong"]["mismatch"],
+        bowtie=config["pingpong"]["bowtie_params"],
     shell:
         "bowtie "
         "-f --sam "
         "--threads {threads} "
-        "-v {params.mismatch} "
-        "--best -k 1 "
+        "{params.bowtie} "
         "-x {params.index_prefix} "
         "{input.fasta} 2> {log} | "
         "samtools view "
