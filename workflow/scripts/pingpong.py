@@ -41,6 +41,7 @@ to the same repeat element.
 """
 
 import csv
+import logging
 from collections import defaultdict, Counter
 import pysam
 
@@ -80,6 +81,9 @@ def compute_ping_pong(bam_path, window=30):
                  Counts are weighted by the number of pairs at distance 10.
                  sense     -> position 10 nucleotide of the sense read
                  antisense -> position 1 nucleotide of the antisense read
+      fwd_count:  total sense (FWD) mapped reads, weighted by collapsed count
+      rev_count:  total antisense (REV) mapped reads, weighted by collapsed count
+      total_pairs: total sense/antisense read pairs within `window`
     """
     # Lookup table for reverse-complementing a single base.
     RC = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
@@ -89,6 +93,8 @@ def compute_ping_pong(bam_path, window=30):
     # R (antisense) reads store the nucleotide at position 1 of the read (1U bias).
     te_list = defaultdict(lambda: {"F": defaultdict(list), "R": defaultdict(list)})
 
+    fwd_count = 0
+    rev_count = 0
     for read in load_reads(bam_path):
         te_id = read.reference_name
         count = read_count_from_header(read)
@@ -100,6 +106,7 @@ def compute_ping_pong(bam_path, window=30):
             five_p = read.reference_start
             nt = seq[9] if len(seq) >= 10 else None
             te_list[te_id]["F"][five_p].append((count, nt))
+            fwd_count += count
         else:
             # Antisense (- strand) read: BAM stores SEQ as the reverse
             # complement of the original read, so seq[0] is the complement
@@ -108,12 +115,14 @@ def compute_ping_pong(bam_path, window=30):
             five_p = read.reference_start + read.query_length
             nt = RC.get(seq[-1]) if seq else None
             te_list[te_id]["R"][five_p].append((count, nt))
+            rev_count += count
 
     # Compute distances
     # defaultdict of Counter allows safe incrementing,
     # even when keys do not yet exist
     results = defaultdict(Counter)
     nt_counts = defaultdict(lambda: {"sense": Counter(), "antisense": Counter()})
+    total_pairs = 0
 
     for te, strands in te_list.items():
         F = strands["F"]
@@ -129,7 +138,9 @@ def compute_ping_pong(bam_path, window=30):
                     # sum_F and sum_R are sums of counts for reads at these
                     # positions. Each read at f_pos can pair with each read
                     # at r_pos.
-                    results[te][distance] += sum_F * sum_R
+                    pair_count = sum_F * sum_R
+                    results[te][distance] += pair_count
+                    total_pairs += pair_count
 
                     if distance == 10:
                         # Weight each sense read's pos-10 nt by the total
@@ -143,7 +154,7 @@ def compute_ping_pong(bam_path, window=30):
                             if nt_R is not None:
                                 nt_counts[te]["antisense"][nt_R] += sum_F * c_R
 
-    return results, nt_counts
+    return results, nt_counts, fwd_count, rev_count, total_pairs
 
 
 # Get inputs/outputs from Snakemake
@@ -154,8 +165,22 @@ sample = snakemake.wildcards["sample"]
 out = snakemake.output["pingpong"]
 out_nt_bias = snakemake.output["nt_bias"]
 
+logging.basicConfig(
+    filename=snakemake.log[0],
+    filemode="w",
+    format="%(levelname)s:%(asctime)s:%(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+)
+
 # Run ping‑pong analysis
-res, nt_counts = compute_ping_pong(bam, window=window)
+res, nt_counts, fwd_count, rev_count, total_pairs = compute_ping_pong(
+    bam, window=window
+)
+
+logging.info(f"FWD (sense) mapped reads: {fwd_count}")
+logging.info(f"REV (antisense) mapped reads: {rev_count}")
+logging.info(f"Ping-pong pairs analysed (distance <= {window}): {total_pairs}")
 
 # Write distance CSV
 with open(out, "w", newline="") as fh:
