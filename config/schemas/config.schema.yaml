@@ -37,9 +37,6 @@ properties:
   tesmall:
     type: object
     properties:
-      run_tesmall:
-        type: boolean
-        description: Whether to execute the TEsmall annotation pipeline.
       dbfolder:
         type: string
         description: Path to the TEsmall database directory.
@@ -65,9 +62,20 @@ properties:
           - type: array
             items:
               type: string
-              enum: ["DNA", "LINE", "LTR", "RC", "Retroposon", "Satellite", "SINE", "Unknown", "Unspecified"]
+              enum:
+                [
+                  "DNA",
+                  "LINE",
+                  "LTR",
+                  "RC",
+                  "Retroposon",
+                  "Satellite",
+                  "SINE",
+                  "Unknown",
+                  "Unspecified",
+                ]
             minItems: 1
-    required: ["run_tesmall", "te_classes"]
+    required: ["dbfolder", "minlen", "maxlen", "maxaln", "mismatch", "te_classes"]
 
   length_distribution:
     type: object
@@ -106,6 +114,9 @@ properties:
   bigwig:
     type: object
     properties:
+      bin_size:
+        type: integer
+        description: Bin size (bp) passed to bamCoverage --binSize.
       read_length:
         type: integer
         description: >
@@ -119,25 +130,33 @@ properties:
           Normalisation method passed to bamCoverage --normalizeUsing.
           RPGC normalises to 1x genome coverage using the effective genome
           size; CPM and RPKM are read-count based; None disables
-          normalisation.
-        enum: ["RPKM", "CPM", "BPM", "RPGC", "None"]
+          normalisation. totalReads and miRNAReads are custom scale-factor
+          methods (based on TEsmall count summaries) used for the
+          strand-split TE bigWigs.
+        enum: ["RPKM", "CPM", "BPM", "RPGC", "None", "totalReads", "miRNAReads"]
       extra:
         type: string
         description: Additional command line arguments passed to bamCoverage.
-    required: ["read_length", "normalize_using"]
+    required: ["bin_size", "read_length", "normalize_using", "extra"]
 
   pingpong:
     type: object
     properties:
-      mismatch:
-        type: integer
-        description: Allowed mismatches for ping-pong analysis.
+      bowtie_params:
+        type: string
+        description: Bowtie alignment arguments used for the ping-pong analysis.
       fasta:
         type: string
         description: Path to the consensus sequence FASTA file.
       window:
         type: integer
         description: Analysis window size for ping-pong overlap distances.
+      min_len:
+        type: integer
+        description: Minimum read length (inclusive) included in the ping-pong analysis.
+      max_len:
+        type: integer
+        description: Maximum read length (inclusive) included in the ping-pong analysis.
       plot:
         type: object
         properties:
@@ -157,7 +176,7 @@ properties:
           required: ["type"]
         then:
           required: ["bar_position"]
-    required: ["fasta", "window", "plot"]
+    required: ["bowtie_params", "fasta", "window", "min_len", "max_len", "plot"]
 
 required:
   - genome
