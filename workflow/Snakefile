@@ -91,8 +91,6 @@ TARGETS = [
         "results/plots/length_distribution_{method}.pdf",
         method=length_normalisation_method(config),
     ),
-    # "results/plots/length_distribution_mirna_mapped.pdf",
-    # "results/plots/length_distribution_mirna_mapped.csv",
     "results/plots/pingpong.pdf",
     "results/plots/pingpong.csv",
     "results/plots/rna_counts.pdf",
@@ -109,31 +107,24 @@ TARGETS = [
         te=TE,
     ),
     expand("results/plots/te_tracks/{te}.pdf", te=TE),
+    "results/plots/pca_plot.pdf",
+    expand("results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS),
+    expand("results/plots/{comparison}/results.csv", comparison=COMPARISONS),
+    "results/plots/te_small/piechart.pdf",
+    "results/plots/te_small/piechart.csv",
+    "results/plots/te_small/bargraph.pdf",
+    "results/plots/te_small/stacked_bar_te.pdf",
+    "results/plots/te_small/stacked_bar_te.csv",
+    "results/plots/te_small/te_top_families.pdf",
+    "results/plots/te_small/te_cpm.pdf",
+    expand("results/bigwig/mirna_{sample}.bw", sample=SAMPLES),
+    expand(
+        "results/bigwig/mirna_{condition}_average.bw",
+        condition=set(config["samples"].values()),
+    ),
+    "results/plots/length_distribution_tesmall.pdf",
+    "results/plots/length_distribution_tesmall.csv",
 ]
-
-if config["tesmall"]["run_tesmall"]:
-    TARGETS.extend(
-        [
-            "results/plots/pca_plot.pdf",
-            expand(
-                "results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS
-            ),
-            expand("results/plots/{comparison}/results.csv", comparison=COMPARISONS),
-            "results/plots/te_small/piechart.pdf",
-            "results/plots/te_small/piechart.csv",
-            "results/plots/te_small/bargraph.pdf",
-            "results/plots/te_small/stacked_bar_te.pdf",
-            "results/plots/te_small/stacked_bar_te.csv",
-            "results/plots/te_small/te_top_families.pdf",
-            expand("results/bigwig/mirna_{sample}.bw", sample=SAMPLES),
-            expand(
-                "results/bigwig/mirna_{condition}_average.bw",
-                condition=set(config["samples"].values()),
-            ),
-            "results/plots/length_distribution_tesmall.pdf",
-            "results/plots/length_distribution_tesmall.csv",
-        ]
-    )
 
 
 rule all:
