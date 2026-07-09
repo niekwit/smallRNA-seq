@@ -20,8 +20,7 @@ Prepare your analysis directory as follows:
 │   ├── config.yaml
 │   ├── README.md
 │   └── schemas
-│       ├── config.schema.yaml
-│       └── samples.schema.yaml
+│       └── config.schema.yaml
 ├── reads
 │   ├── KO_1
 │   │   └── KO_1.fastq.gz
@@ -37,7 +36,6 @@ Prepare your analysis directory as follows:
     ├── envs
     │   ├── deeptools.yaml
     │   ├── pingpong.yaml
-    │   ├── process_reads.yaml
     │   ├── R.yaml
     │   └── te_small.yaml
     ├── rules
@@ -49,21 +47,26 @@ Prepare your analysis directory as follows:
     ├── scripts
     │   ├── deseq2_full.R
     │   ├── deseq2.R
+    │   ├── expand_collapsed_bam.py
     │   ├── pingpong.py
     │   ├── plot_length_distribution.R
+    │   ├── plot_length_distribution_tesmall.R
     │   ├── plot_pca.R
     │   ├── plot_pingpong.R
     │   ├── plot_rna_counts.R
+    │   ├── pygenometracks.py
     │   ├── sequence_bias_pirna.R
+    │   ├── stranded_te_bigwig.py
     │   ├── te_pos_coverage.R
     │   ├── te_small_bargraph.R
+    │   ├── te_small_cpm_te_classes.R
     │   ├── te_small.py
     │   ├── te_small_piechart.R
     │   ├── te_small_stacked_bar_te.R
     │   └── te_small_top_families.R
     └── Snakefile
 
-12 directories, 33 files
+12 directories, 37 files
 ```
 
 The workflow and config directories can be copied from this repository.
@@ -107,18 +110,33 @@ length_distribution:
   mirna_min: 19
   mirna_max: 25
 
+# Bigwig parameters
+# See "Bigwig normalisation" below for a full explanation of normalize_using.
 bigwig:
-  read_length: 50 # used to select effective genome size for bamCoverage
-  normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
+  bin_size: 10 # bamCoverage bin size (bp)
+  read_length: 50 # used to select effective genome size for RPGC normalisation
+  normalize_using: CPM # RPKM, CPM, BPM, RPGC, None, totalReads, miRNAReads
   extra: "" # additional bamCoverage arguments
 
 pingpong:
+  # bowtie alignment parameters for ping-pong analysis
+  # Suggested parameters:
+  # --best -k 1 -v 3: Maximizing alignment yield (forces a reported home for every alignable read).
+  # -n 2 -M 1 --best --strata --nomaqround: High-stringency filtering (strictly grouping by mismatch count and catching multi-mappers).
+  bowtie_params: "--best -k 1 -v 3"
+  fasta: resources/TE.fa
   mismatch: 3
-  fasta: resources/L1mTf.fa
-  window: 30
+  min_len: 23 # reads outside [min_len, max_len] are excluded from the ping-pong analysis
+  max_len: 32
+  window: 30 # maximum 5' overlap distance (nt) recorded between sense/antisense read pairs
+  plot:
+    type: line # line or bar
+    bar_position: grouped # grouped or overlap (bar only)
 ```
 
-The FASTA file under config[pingpong][fasta] should contain the TE sequences of interest for ping-pong analysis. Example contents:
+`config.yaml` also has an optional `ngs_tracker` section for registering completed runs (and attaching key output files) with [NGS Tracker](https://github.com/niekwit/ngs-tracker). It's disabled by default (`ngs_tracker.enabled: false`); see the comments in `config/config.yaml` for the full set of fields (`base_url`, `project_id`, `files`, etc.). When enabled, the workflow registers the run automatically on both success and failure via `onsuccess`/`onerror` hooks.
+
+The FASTA file under `config[pingpong][fasta]` should contain the TE consensus/repeat sequences of interest for the ping-pong analysis and the TE coverage tracks. Example contents:
 
 <details>
   <summary>Example TE fasta file</summary>
@@ -144,104 +162,11 @@ tctcccaggtctgctgagagacggtaacagaatcaccagaagaacaatctctaaacagag
 tcaactataactactaactccagagattaccagatggcgaaaggtaaacgtaggaatcct
 actaacaggaaccaagaccactcaccatcatcagaacccagcactcccacttcgcccagt
 ccagggcaccccaacacacccgaaaacctagacctagatttaaaagcatatctcatgatg
-atggtagaggacatcaagaaggactttaataaatcacttaaagaaatacaggagaacact
-gctaaagagttacaagtccttaaagaaaaacaggaaaacacaatcaaacaggtagaagtc
-cttacagaaaaagaggaaaaaacatacaaacaggtgatggaaatgaacaaaaccatacta
-gacctaaaaagggaagtagaaacaataaagaaaactcaaagtgaggcaacactggagata
-gaaaccctaggaaagaaatctggaaccatagatttgagcatcagcaacagaatacaagag
-atggaagagagaatctcaggtgcagaagattccatagagaacatcggcacaacaatcaaa
-gaaaatggaaaatgcaaaaagatcctaactcaaaatatccaggaaatccaggacacaatg
-agaagaccaaacctacggataataggagtggatgagaatgaagattttcaactcaaagga
-ccagcaaacatcttcaacaaaattattgaagaaaacttcccaaatataaagaaagagata
-cctatgaacatacaagaagcctacagaactccaaatagactggaccagaaaagaaattcc
-tcccgacacataataatcagaacaacaaatgcactaaataaagatagaatactaaaagca
-gtaagggaaaaaggtcaagtaacatacaaaggcaagcctatcagaattacaccagatttt
-tcaccagagactatgaaagccagaagagcctggacagatgttatacagacactaagagaa
-cacaaattccagcccaggctactatacccagccaaactctcaattaccatagatggagaa
-accaaagtattccacgacaaaaccaaattcacacattatctctccacgaatccagccctt
-caaaggttaataacagaaaaaaaccaatacaagaacgggaacaatgccctagaaaaaaca
-agaaggtaatccctcaacaaacctaaaagaagacagccacaagaacagaatgccaacttt
-aacaacaaaaataacaggaagcaacaattacttttccttaatatctcttaacatcaatgg
-tctcaactccccaataaaaagacatagactaacaaactggctacacaaacaagacccaac
-attttgctgtttacaggagacacatctcagagaaaaagatagacactacctcagaataaa
-aggctggaaaacaattttccaagcaaatggtatgaagaaacaagctggagtagccatcct
-aatatctgataagattgacttccaacccaaagtcatcaaaaaagacaaggaggggcactt
-ygttctcatcaaaggtaaaatcctccaagaggaactctcaattctgaatatctatgctcc
-aaatacaagggcagccacattcattaaagaaactttagtaaagctcaaagcacacattgc
-acctcacacaataatagtgggagacttcaacacaccactttcaccaatggacagatcatg
-gaaacagaaactaaacagggacacactgaaactaacagaagtgatgaaacaaatggatct
-gacagatatctacagaacattttatcctaaaacaaaaggatataccttcttctcagcacc
-tcatggtaccttctccaaaattgaccacataataggtcacaaaacaggcctcaacagatt
-caaaaatattgaaattgtcccatgtatcctatcagatcaccatgcactaaggctgatctt
-caataacaaaaaaaataacagaaagccaacactcacgtggaaactgaacaacactcttct
-caatgataccttggtcaaggaaggaataaagaaagaaattaaagactttttagagtttaa
-tgaaaatgaagccacaacgtacccaaacctttgggacacaatgaaagcatttctaagagg
-gaaactcatagctctgagtgcctccatgaagaaacgggagagagcacatactagcagctt
-gacaacacatctaaaagctctagaaaaaaaggaagcaaattcacccaagaggagtagacg
-gcaggaaataatcaaactcaggggtgaaatcaaccaagtggaaacaagaagaactattca
-aagaattaaccaaacgaggagttggttctttgagaaaatcaacaagatagataaaccctt
-agctagactcactagagggcacagagacaaaatcctaattaacaaaatcagaactgaaaa
-gggagacataacaacagatcctgaagaaatccaaaacaccatcagatccttctacaaaag
-gctatactcaacaaaactggaaaacctggacgaaatggacaaatttctggacagatacca
-ggtaccaaagttgaatcaggatcaagttgaccttctaaacagtcccatatcccctaaaga
-aatagaagcagttataaatagtctcccagccaaaaaaagcccaggaccagacgggtttag
-tgcagagttctatcagaccttcaaagaagatctaattccagttctgcacaaactttttca
-caagatagaagtagaaagtactctacccaactcattttatgaagccactattactctgat
-acctaaaccacagaaagatccaacaaagatagagaacttcagaccaatttctcttatgaa
-tatcgatgcaaaaatcctcaataaaattctcgctaaccgaatccaagaacacattaaagc
-aatcatccatcctgaccaagtaggttttattccaggratgcagggatggtttaatatacg
-aaaatccatcaatgtaatccactatataaacaaactcaaagacaaaaaccacatgatcat
-ctcgttrgatgcagaaaaagcatttgacaagatccaacacccattcatgataaaagttct
-ggaaagatcaggaattcaaggcccatacctaaacatgataaaagcaatctacagcaaacc
-agtagccaacatcaaagtaaatggagagaagctggaagcaatcccactaaaatcagggac
-tagacaaggctgcccactttctccctaccttttcaacatagtacttgaagtattagccag
-agcaattcgacaacaaaaggagatcaaggggatacaaattggaaaggaggaagtcaaaat
-atcactttttgcagatgatatgatagtatatataagtgaccctaaaaattccaccagaga
-actcctaaacctgataaacagcttcggtgaagtagctggatataaaattaactcaaacaa
-gtcaatggcctttctctacacaaagaataaacaggctgagaaagaaattagggaaacaac
-acccttctcaatagtcacaaataatataaaatatctcggcgtgactctaactaaggaagt
-gaaagatctgtatgataaaaacttcaagtctctgaagaaagaaattaaagaagatctcag
-aagatggaaagatctcccatgctcatggattggcaggatcaayattgtaaaaatggctat
-cttgccaaaagcaatctacagattcaatgcaatccccatcaaaattccaactcaattctt
-caacgaattagaaggagcaatttgcaaattcatctggaataacaaaaaacctaggatagc
-aaaaactcttctcaaggataaaagaacctctggtggaatcaccatgcctgacctaaagct
-ttactacagagcaattgtggtaaaaactgcatggtactggtatagagacagacaagtaga
-ccaatggaatagaattgaagacccagaaatgaacccacacacctatggtcacttgatctt
-cgacaagggagctaaaaccatccagtggaagaaagacagcattttcaacaaatggtgctg
-gcacaactggttgttatcatgtagaagaatgcgaatcgatccatacttatctccttgtac
-taaggtcaaatctaaatggatcaaagaacttcacataaaaccagagacactgaaacttat
-agaggagaaagtggggaaaagccttgaagatatgggcacaggggaaaaattcctgaacag
-aacagcaatggcttgtgctgtaagatcgagaattgacaaatgggacctaatgaaactcca
-aagtttctgcaaggcaaaagacaccgtcaataagacaaagagaccaccaacagattggga
-aaggatctttacctatcctaaatcagataggggactaatatccaacatatataaagaact
-caagaaggtggacttcagaaaatcaaayaaccccattaaaaaatggggctcagaactgaa
-caaagaattctcacctgaggaataccgaatggcagagaagcacctgaaaaaatgttcaac
-atccttaatcatcagggaaatgcaaatcaaaacaaccctgagattccacctcacaccagt
-cagaatgtctaagatcaaaaattcaggtgacagcagatgctggcgaggatgtggagaaag
-aggaacactcctccattgttggtgggattgcaggcttgtacaaccactctggaaatccgt
-ctggcggttcctcagaaaattggacatagtactaccggaggatccagcaatacctctcct
-gggcatatatccagaagatgccccaactggtaagaaggacacatgctccactatgttcat
-agcagccttatttataatagccagaagctggaaagaacccagatgcccctcaacagagga
-atggatacagaaaatgtggtacatctacacaatggagtactactcagctattaaaaagaa
-tgaatttatgaaattcctagccaaatggatggacctggagggcatcatcctgagtgaggt
-aacacattcacaaaggaactcacacaatatgtactcactgataagtggatattagcccaa
-aacctaggatacccaagatataagatacaatttcctaaacacatgaaactcaagaaaaat
-gaagactgaagtgtggacactatgcccctccttagaagtgggaacaaaacacccttggaa
-ggagttacagagacaaagtttggagctgagatgaaaggatggaccatgtagagactgcct
-tatccagggatccaccccataatcagcatccaaacgctgacaccattgcatacactagca
-agattttatcgaaaggacccagatgtagctgtctcttgtgagactatgccggggcctagc
-aaacacagaagtggatgcccacagtcagctaatggatggatcacagggctcccaatggag
-gagctagagaaagtacccaaggagctaaagggatctgcaaccctataggtggatcaacat
-tatgaactaaccagtaccccggagctcttgactctagctgcatatgtatcaaaagatggc
-ctagtcggccatcactggaaagagaggcccattggacacacaaactttatatgccccaga
-acaggggaacgccagggccaaaaagggggagtgggcgggtaggggagtgggggtgggtgg
-gtatgggggacttttggtatagcattggaaatgtaaatgagctaaatacctaataaaaaa
-tggaaagaaa
 ```
 
 </details>
 
-To store frequently used `Snakemake` command line values, set up a `config.yaml` in ~/.config/snakemake/standard/:
+To store frequently used `Snakemake` command line values, set up a `config.yaml` in `~/.config/snakemake/standard/`:
 
 ```yaml
 cores: 32
@@ -261,6 +186,24 @@ To run the workflow:
 $ snakemake --profile /home/niek/.config/snakemake/standard/
 ```
 
+### Bigwig normalisation
+
+`bigwig.normalize_using` controls how coverage tracks are scaled. It applies to the TE-specific, strand-split bigWigs used for the ping-pong TE coverage tracks (`results/te_bigwig/`, generated by `workflow/scripts/stranded_te_bigwig.py`). Seven values are supported:
+
+| Value | Description |
+| --- | --- |
+| `RPKM` | Reads Per Kilobase per Million mapped reads — deepTools' standard length- and depth-normalised coverage. |
+| `CPM` | Counts Per Million mapped reads — depth normalisation only, no length term. |
+| `BPM` | Bins Per Million mapped reads (TPM-like) — normalises so bin values sum to the same total across samples. |
+| `RPGC` | Reads Per Genomic Content (1x normalisation) — scales coverage to an average of 1x across the effective genome size. Requires `bigwig.read_length` to pick the correct precomputed effective genome size (50/75/100/150/200) for the configured `genome`. |
+| `None` | No normalisation; raw read counts per bin. |
+| `totalReads` | Custom method (not a deepTools built-in). Computes a scale factor as `1 / total_reads * 1e6` from the TEsmall `count_summary.txt` for that sample (i.e. reads per million of the *entire* small-RNA library, not just TE-mapped reads), then applies it via `bamCoverage --normalizeUsing None --scaleFactor <factor>`. |
+| `miRNAReads` | Same approach as `totalReads`, but the scale factor is `1 / total_miRNA_reads * 1e6`, using only reads TEsmall annotated as `miRNA`. Useful for normalising against a stable miRNA reference pool when total small-RNA composition varies a lot between samples/conditions. |
+
+For `totalReads` and `miRNAReads`, the reverse-strand track's scale factor is negated (multiplied by -1) so forward- and reverse-strand coverage render on opposite sides of zero when viewed together (e.g. in the `te_tracks` pyGenomeTracks plots or a genome browser). The resolved scale factor is also written out per sample/strand for record-keeping.
+
+> **Note:** the miRNA bigWigs under `results/bigwig/` (`mirna_bigwig` rule) currently only support the five standard deepTools values (`RPKM`/`CPM`/`BPM`/`RPGC`/`None`) — `totalReads`/`miRNAReads` are not yet implemented for that rule and will cause `bamCoverage` to error if selected there.
+
 ## Output
 
 ```shell
@@ -272,49 +215,38 @@ results/
 │   ├── mirna_WT_1.bw
 │   ├── mirna_WT_2.bw
 │   └── mirna_WT_average.bw
+├── deseq2
+│   └── dds_full.rds
 ├── fasta
 │   ├── KO_1.collapsed.fasta
 │   ├── KO_1.rrna_mirna_removed.fasta
 │   ├── KO_1.rrna_removed.fasta
-│   ├── KO_2.collapsed.fasta
-│   ├── KO_2.rrna_mirna_removed.fasta
-│   ├── KO_2.rrna_removed.fasta
 │   ├── WT_1.collapsed.fasta
 │   ├── WT_1.rrna_mirna_removed.fasta
-│   ├── WT_1.rrna_removed.fasta
-│   ├── WT_2.collapsed.fasta
-│   ├── WT_2.rrna_mirna_removed.fasta
-│   └── WT_2.rrna_removed.fasta
+│   └── WT_1.rrna_removed.fasta
 ├── length_distribution
 │   ├── KO_1_length_distribution.txt
-│   ├── KO_2_length_distribution.txt
-│   ├── WT_1_length_distribution.txt
-│   └── WT_2_length_distribution.txt
+│   └── WT_1_length_distribution.txt
 ├── mirna
 │   ├── KO_1.bam
 │   ├── KO_1.fasta
-│   ├── KO_2.bam
-│   ├── KO_2.fasta
 │   ├── WT_1.bam
-│   ├── WT_1.fasta
-│   ├── WT_2.bam
-│   └── WT_2.fasta
+│   └── WT_1.fasta
 ├── pingpong
 │   ├── KO_1.bam
+│   ├── KO_1.expanded.bam
 │   ├── KO_1.csv
 │   ├── KO_1_nt_bias.csv
-│   ├── KO_2.bam
-│   ├── KO_2.csv
-│   ├── KO_2_nt_bias.csv
 │   ├── WT_1.bam
+│   ├── WT_1.expanded.bam
 │   ├── WT_1.csv
-│   ├── WT_1_nt_bias.csv
-│   ├── WT_2.bam
-│   ├── WT_2.csv
-│   └── WT_2_nt_bias.csv
+│   └── WT_1_nt_bias.csv
 ├── plots
 │   ├── length_distribution_total_count_normalisation.csv
 │   ├── length_distribution_total_count_normalisation.pdf
+│   ├── length_distribution_tesmall.csv
+│   ├── length_distribution_tesmall.pdf
+│   ├── pca_plot.pdf
 │   ├── pingpong.csv
 │   ├── pingpong.pdf
 │   ├── pirna_sequence_bias
@@ -322,27 +254,45 @@ results/
 │   │   ├── L1MdTf_III_frequencies.csv
 │   │   └── L1MdTf_III_logo.pdf
 │   ├── rna_counts.pdf
-│   └── te_pos_coverage
-│       └── L1MdTf_III.pdf
+│   ├── te_pos_coverage
+│   │   └── L1MdTf_III.pdf
+│   ├── te_small
+│   │   ├── bargraph.pdf
+│   │   ├── piechart.csv
+│   │   ├── piechart.pdf
+│   │   ├── stacked_bar_te.csv
+│   │   ├── stacked_bar_te.pdf
+│   │   ├── te_cpm.csv
+│   │   ├── te_cpm.pdf
+│   │   └── te_top_families.pdf
+│   ├── te_tracks
+│   │   ├── L1MdTf_III.ini
+│   │   └── L1MdTf_III.pdf
+│   └── KO_vs_Control
+│       ├── results.csv
+│       └── volcano_plot.pdf
 ├── rrna
 │   ├── KO_1.bam
 │   ├── KO_1.fasta
-│   ├── KO_2.bam
-│   ├── KO_2.fasta
 │   ├── WT_1.bam
-│   ├── WT_1.fasta
-│   ├── WT_2.bam
-│   └── WT_2.fasta
-├── seqs
-│   ├── KO_1_seqs.txt
-│   ├── KO_2_seqs.txt
-│   ├── WT_1_seqs.txt
-│   └── WT_2_seqs.txt
+│   └── WT_1.fasta
+├── te_bigwig
+│   ├── KO_1_fwd.bw
+│   ├── KO_1_rev.bw
+│   ├── KO_average_fwd.bw
+│   ├── KO_average_rev.bw
+│   ├── WT_1_fwd.bw
+│   ├── WT_1_rev.bw
+│   ├── WT_average_fwd.bw
+│   └── WT_average_rev.bw
+├── te_small
+│   └── KO_1
+│       ├── count_summary.txt
+│       ├── KO_1.anno.rlen.info
+│       └── report.html
 └── trimmed
     ├── KO_1_qc.txt
-    ├── KO_2_qc.txt
-    ├── WT_1_qc.txt
-    └── WT_2_qc.txt
+    └── WT_1_qc.txt
 ```
 
 ## Citation
