@@ -280,6 +280,8 @@ rule pingpong_analysis:
     threads: 2
     params:
         window=config["pingpong"]["window"],
+        min_len=config["pingpong"]["min_len"],
+        max_len=config["pingpong"]["max_len"],
     script:
         "../scripts/pingpong.py"
 
@@ -366,10 +368,12 @@ rule index_expanded_bam:
 
 rule fwd_strand_bigwig:
     input:
+        txt="results/te_small/{sample}/count_summary.txt",
         bam="results/pingpong/{sample}.expanded.bam",
         bai="results/pingpong/{sample}.expanded.bam.bai",
     output:
         bigwig="results/te_bigwig/{sample}_fwd.bw",
+        scale_factor="results/te_bigwig/{sample}_scale_factor.txt",
     log:
         "logs/pingpong/{sample}_fwd_bigwig.log",
     conda:
@@ -378,8 +382,9 @@ rule fwd_strand_bigwig:
     params:
         bin_size=config["bigwig"]["bin_size"],
         normalise=config["bigwig"]["normalize_using"],
-        strand="--samFlagExclude 16",
-        scale_factor="",
+        strand="forward",
+        #strand="--samFlagExclude 16",
+        #scale_factor="",
         extra=config["bigwig"]["extra"],
     shell:
         "bamCoverage "
