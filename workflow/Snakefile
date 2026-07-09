@@ -117,11 +117,11 @@ TARGETS = [
     "results/plots/te_small/stacked_bar_te.csv",
     "results/plots/te_small/te_top_families.pdf",
     "results/plots/te_small/te_cpm.pdf",
-    expand("results/bigwig/mirna_{sample}.bw", sample=SAMPLES),
-    expand(
-        "results/bigwig/mirna_{condition}_average.bw",
-        condition=set(config["samples"].values()),
-    ),
+    # expand("results/bigwig/mirna_{sample}.bw", sample=SAMPLES),
+    # expand(
+    #    "results/bigwig/mirna_{condition}_average.bw",
+    #    condition=set(config["samples"].values()),
+    # ),
     "results/plots/length_distribution_tesmall.pdf",
     "results/plots/length_distribution_tesmall.csv",
 ]
