@@ -14,7 +14,6 @@ cutadapt:
   extra: "-m 16 --trimmed-only -q 20"
 
 tesmall:
-  run_tesmall: True
   dbfolder: /tmp/TEsmall_db/
   minlen: 16
   maxlen: 36
@@ -29,7 +28,7 @@ tesmall:
 bigwig:
   bin_size: 10
   read_length: 50 # used to select effective genome size for bamCoverage
-  normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
+  normalize_using: CPM # RPKM, CPM, BPM, RPGC, None, totalReads, miRNAReads
   extra: "" # additional bamCoverage arguments
 
 length_distribution:
@@ -48,6 +47,8 @@ pingpong:
   # -n 2 -M 1 --best --strata --nomaqround: High-stringency filtering (strictly grouping by mismatch count and catching multi-mappers).
   bowtie_params: "--best -k 1 -v 3"
   fasta: resources/L1MdTf_III.fa
+  min_len: 23
+  max_len: 32
   window: 30
   plot:
     type: line # line or bar

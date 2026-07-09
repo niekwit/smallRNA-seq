@@ -14,7 +14,6 @@ cutadapt:
   extra: "-m 16 --trimmed-only -q 20"
 
 tesmall:
-  run_tesmall: False
   dbfolder: /mnt/4TB_SSD/TEsmall_db/
   minlen: 16
   maxlen: 36
@@ -23,7 +22,7 @@ tesmall:
   extra_args: ""
   # TE classes to plot top 10 most abundent members
   # All, or a list: [LINE, LTR] (DNA/LINE/LTR/RC/Retroposon/Satellite/SINE/Unknown/Unspecified)
-  te_classes: All
+  te_classes: [LINE, LTR]
 
 length_distribution:
   apply_mirna_correction: True # False will total count normalise
@@ -38,7 +37,7 @@ length_distribution:
 bigwig:
   bin_size: 10 # used to select effective genome size for bamCoverage
   read_length: 50 # used to select effective genome size for bamCoverage
-  normalize_using: CPM # RPKM, CPM, BPM, RPGC, or None
+  normalize_using: CPM # RPKM, CPM, BPM, RPGC, None, totalReads, miRNAReads
   extra: "" # additional bamCoverage arguments
 
 pingpong:
@@ -48,6 +47,8 @@ pingpong:
   # -n 2 -M 1 --best --strata --nomaqround: High-stringency filtering (strictly grouping by mismatch count and catching multi-mappers).
   bowtie_params: "--best -k 1 -v 3"
   fasta: resources/L1mTf.fa
+  min_len: 23
+  max_len: 32
   window: 30
   plot:
     type: line # line or bar
