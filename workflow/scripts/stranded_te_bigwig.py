@@ -64,7 +64,7 @@ else:
 
 if normalise in ["RPKM", "CPM", "BPM", "RPGC", "None"]:
     # Use standard normalisation methods
-    normalise_flag = f"--normalizeUsing {normalise}"
+    normalise_flag = f"--normalizeUsing {normalise} --scaleFactor {direction}"
 elif normalise == "totalReads":
     # Normalise by total reads
     # Calculate scale factor based on total reads from the TEsmall count summary
