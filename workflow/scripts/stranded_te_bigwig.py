@@ -64,6 +64,7 @@ else:
 
 if normalise in ["RPKM", "CPM", "BPM", "RPGC", "None"]:
     # Use standard normalisation methods
+    scale_factor = direction
     normalise_flag = f"--normalizeUsing {normalise} --scaleFactor {direction}"
 elif normalise == "totalReads":
     # Normalise by total reads
