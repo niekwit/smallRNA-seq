@@ -87,7 +87,7 @@ cmd = (
     f"{strand_flag} "
     f"{normalise_flag} "
     f"--numberOfProcessors {threads} "
-    f"2> {log}"
+    f"2>> {log}"
 )
 
 logging.info(f"Running bamCoverage with command: {cmd}")
