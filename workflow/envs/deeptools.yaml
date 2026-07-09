@@ -6,3 +6,4 @@ dependencies:
   - pygenometracks=3.9
   - pybigwig=0.3.25
   - biopython=1.87
+  - pandas
