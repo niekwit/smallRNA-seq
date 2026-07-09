@@ -386,16 +386,8 @@ rule fwd_strand_bigwig:
         #strand="--samFlagExclude 16",
         #scale_factor="",
         extra=config["bigwig"]["extra"],
-    shell:
-        "bamCoverage "
-        "--bam {input.bam} "
-        "--outFileName {output.bigwig} "
-        "--binSize {params.bin_size} "
-        "--normalizeUsing {params.normalise} "
-        "{params.strand} "
-        "{params.scale_factor} "
-        "{params.extra} "
-        "--numberOfProcessors {threads} 2> {log}"
+    script:
+        "../scripts/stranded_te_bigwig.py"
 
 
 use rule fwd_strand_bigwig as rev_strand_bigwig with:
