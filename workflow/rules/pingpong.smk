@@ -373,7 +373,7 @@ rule fwd_strand_bigwig:
         bai="results/pingpong/{sample}.expanded.bam.bai",
     output:
         bigwig="results/te_bigwig/{sample}_fwd.bw",
-        scale_factor="results/te_bigwig/{sample}_scale_factor.txt",
+        scale_factor="results/te_bigwig/{sample}_scale_factor_fwd.txt",
     log:
         "logs/pingpong/{sample}_fwd_bigwig.log",
     conda:
@@ -383,8 +383,6 @@ rule fwd_strand_bigwig:
         bin_size=config["bigwig"]["bin_size"],
         normalise=config["bigwig"]["normalize_using"],
         strand="forward",
-        #strand="--samFlagExclude 16",
-        #scale_factor="",
         extra=config["bigwig"]["extra"],
     script:
         "../scripts/stranded_te_bigwig.py"
@@ -393,6 +391,7 @@ rule fwd_strand_bigwig:
 use rule fwd_strand_bigwig as rev_strand_bigwig with:
     output:
         bigwig="results/te_bigwig/{sample}_rev.bw",
+        scale_factor="results/te_bigwig/{sample}_scale_factor_rev.txt",
     log:
         "logs/pingpong/{sample}_rev_bigwig.log",
     params:
