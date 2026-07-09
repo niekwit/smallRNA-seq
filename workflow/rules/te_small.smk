@@ -9,6 +9,11 @@ rule te_small:
         fastq="results/te_small/{sample}/{sample}.rm_rRNA.fastq",
         rlen="results/te_small/{sample}/{sample}.anno.rlen.info",
         bam="results/te_small/{sample}/{sample}.3trf_free.bam",
+    log:
+        "logs/te_small/{sample}.log",
+    conda:
+        "../envs/te_small.yaml"
+    threads: 4
     params:
         outdir=lambda wildcards, output: os.path.dirname(output.txt),
         genome=GENOME,
@@ -18,11 +23,6 @@ rule te_small:
         maxlen=config["tesmall"]["maxlen"],
         maxaln=config["tesmall"]["maxaln"],
         mismatch=config["tesmall"]["mismatch"],
-    threads: 4
-    log:
-        "logs/te_small/{sample}.log",
-    conda:
-        "../envs/te_small.yaml"
     script:
         "../scripts/te_small.py"
 
@@ -97,13 +97,13 @@ rule te_small_bargraph:
         rlen=expand("results/te_small/{sample}/{sample}.anno.rlen.info", sample=SAMPLES),
     output:
         pdf="results/plots/te_small/bargraph.pdf",
-    params:
-        minlen=config["tesmall"]["minlen"],
-        maxlen=config["tesmall"]["maxlen"],
     log:
         "logs/te_small/bargraph.log",
     conda:
         "../envs/R.yaml"
+    params:
+        minlen=config["tesmall"]["minlen"],
+        maxlen=config["tesmall"]["maxlen"],
     script:
         "../scripts/te_small_bargraph.R"
 
@@ -115,13 +115,13 @@ rule te_small_top_families:
         txt=expand("results/te_small/{sample}/count_summary.txt", sample=SAMPLES),
     output:
         pdf="results/plots/te_small/te_top_families.pdf",
-    params:
-        n_top=10,  # top N subfamilies per TE class
-        te_classes=config["tesmall"]["te_classes"],
     log:
         "logs/te_small/te_top_families.log",
     conda:
         "../envs/R.yaml"
+    params:
+        n_top=10,  # top N subfamilies per TE class
+        te_classes=config["tesmall"]["te_classes"],
     script:
         "../scripts/te_small_top_families.R"
 
@@ -140,3 +140,19 @@ rule te_small_stacked_bar_te:
         "../envs/R.yaml"
     script:
         "../scripts/te_small_stacked_bar_te.R"
+
+
+# Plot CPM of TE-derived piRNAs per condition
+# --------------------------------------------------------
+rule te_small_te_cpm:
+    input:
+        txt=expand("results/te_small/{sample}/count_summary.txt", sample=SAMPLES),
+    output:
+        pdf="results/plots/te_small/te_cpm.pdf",
+        csv="results/plots/te_small/te_cpm.csv",
+    log:
+        "logs/te_small/te_cpm.log",
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../scripts/te_small_cpm_te_classes.R"
