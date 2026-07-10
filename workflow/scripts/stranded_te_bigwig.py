@@ -40,6 +40,7 @@ threads = snakemake.threads
 bin_size = snakemake.params["bin_size"]
 normalise = snakemake.params["normalise"]
 strand = snakemake.params["strand"]
+extra = snakemake.params["extra"]
 
 # Set up logging
 # --------------------------------------------------
@@ -87,6 +88,7 @@ cmd = (
     f"{strand_flag} "
     f"{normalise_flag} "
     f"--numberOfProcessors {threads} "
+    f"{extra} "
     f"2>> {log}"
 )
 
