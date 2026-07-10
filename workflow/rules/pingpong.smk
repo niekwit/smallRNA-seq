@@ -352,25 +352,44 @@ rule expand_collapsed_bam:
         "../scripts/expand_collapsed_bam.py"
 
 
-rule index_expanded_bam:
+rule filter_collapsed_bam:
     input:
-        expanded_bam="results/pingpong/{sample}.expanded.bam",
+        bam="results/pingpong/{sample}.expanded.bam",
     output:
-        bai="results/pingpong/{sample}.expanded.bam.bai",
+        filtered_bam="results/pingpong/{sample}.filtered.bam",
     log:
-        "logs/pingpong/{sample}_index_expanded_bam.log",
+        "logs/pingpong/{sample}_filter_bam.log",
+    conda:
+        "../envs/pingpong.yaml"
+    threads: 2
+    params:
+        min_len=config["pingpong"]["min_len"],
+        max_len=config["pingpong"]["max_len"],
+    shell:
+        "samtools view -h "
+        "-e 'qlen >= {params.min_len} && qlen <= {params.max_len}' "
+        "{input.bam} -b -o {output.filtered_bam} 2> {log}"
+
+
+rule index_filtered_bam:
+    input:
+        filtered_bam="results/pingpong/{sample}.filtered.bam",
+    output:
+        bai="results/pingpong/{sample}.filtered.bam.bai",
+    log:
+        "logs/pingpong/{sample}_index_filtered_bam.log",
     conda:
         "../envs/pingpong.yaml"
     threads: 2
     shell:
-        "samtools index {input.expanded_bam} 2> {log}"
+        "samtools index {input.filtered_bam} 2> {log}"
 
 
 rule fwd_strand_bigwig:
     input:
         txt="results/te_small/{sample}/count_summary.txt",
-        bam="results/pingpong/{sample}.expanded.bam",
-        bai="results/pingpong/{sample}.expanded.bam.bai",
+        bam="results/pingpong/{sample}.filtered.bam",
+        bai="results/pingpong/{sample}.filtered.bam.bai",
     output:
         bigwig="results/te_bigwig/{sample}_fwd.bw",
         scale_factor="results/te_bigwig/{sample}_scale_factor_fwd.txt",
@@ -459,3 +478,19 @@ rule te_tracks:
         conditions=CONDITIONS,
     script:
         "../scripts/pygenometracks.py"
+
+
+rule strand_summary_table:
+    input:
+        pingpong_logs=expand("logs/pingpong/{sample}_analysis.log", sample=SAMPLES),
+        scale_factors=expand(
+            "results/te_bigwig/{sample}_scale_factor_fwd.txt", sample=SAMPLES
+        ),
+    output:
+        summary="results/plots/te_tracks/strand_summary.csv",
+    log:
+        "logs/pingpong/strand_summary.log",
+    conda:
+        "../envs/te_small.yaml"
+    script:
+        "../scripts/strand_summary_table.py"
