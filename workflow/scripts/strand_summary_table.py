@@ -95,8 +95,8 @@ for log_file in pingpong_logs:
                     "total_mapped_reads": total_mapped_reads[sample],
                     "fwd_reads": fwd_reads,
                     "rev_reads": rev_reads,
-                    "fwd_reads_normalised": fwd_reads * scale_factor,
-                    "rev_reads_normalised": rev_reads * scale_factor,
+                    "fwd_reads_normalised": round(fwd_reads * scale_factor),
+                    "rev_reads_normalised": round(rev_reads * scale_factor),
                     "pairs_analysed": pairs,
                 }
             )
