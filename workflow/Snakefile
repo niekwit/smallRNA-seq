@@ -124,6 +124,7 @@ TARGETS = [
     # ),
     "results/plots/length_distribution_tesmall.pdf",
     "results/plots/length_distribution_tesmall.csv",
+    "results/pingpong/strand_summary.csv",
 ]
 
 
