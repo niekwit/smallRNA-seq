@@ -54,7 +54,7 @@ def comparisons(config):
 
 def conditions(config):
     samples_dict = config["samples"]
-    return list(set(samples_dict.values()))
+    return sorted(set(samples_dict.values()))
 
 
 def te(config):
