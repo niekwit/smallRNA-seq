@@ -482,12 +482,13 @@ rule te_tracks:
 
 rule strand_summary_table:
     input:
+        txt=expand("results/te_small/{sample}/count_summary.txt", sample=SAMPLES),
         pingpong_logs=expand("logs/pingpong/{sample}_analysis.log", sample=SAMPLES),
         scale_factors=expand(
             "results/te_bigwig/{sample}_scale_factor_fwd.txt", sample=SAMPLES
         ),
     output:
-        summary="results/plots/te_tracks/strand_summary.csv",
+        summary="results/pingpong/strand_summary.csv",
     log:
         "logs/pingpong/strand_summary.log",
     conda:
