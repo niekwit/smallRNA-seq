@@ -322,22 +322,6 @@ rule plot_sequence_bias_pirna:
         "../scripts/sequence_bias_pirna.R"
 
 
-# Plot per-TE positional read coverage (forward/reverse strand)
-# ------------------------------------------------------------
-rule te_pos_coverage:
-    input:
-        bam=expand("results/pingpong/{sample}.bam", sample=SAMPLES),
-    output:
-        pdf="results/plots/te_pos_coverage/{te}.pdf",
-    log:
-        "logs/pingpong/{te}_te_pos_coverage.log",
-    conda:
-        "../envs/R.yaml"
-    threads: 2
-    script:
-        "../scripts/te_pos_coverage.R"
-
-
 rule expand_collapsed_bam:
     input:
         bam="results/pingpong/{sample}.bam",
