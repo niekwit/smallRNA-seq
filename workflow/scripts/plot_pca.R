@@ -7,11 +7,11 @@ sink(log, type = "message")
 library(tidyverse)
 library(cowplot)
 library(DESeq2)
+library(ggrepel)
 
 # Load dds
 load(snakemake@input[["rds"]])
 
-# Extracting transformed values
 # Extracting transformed values
 if (nrow(dds) < 1000) {
   print("Fewer than 1000 features. Using VST directly.")
@@ -37,23 +37,22 @@ vsd_df <- as.data.frame(colData(vsd))
 if (length(unique(vsd_df$condition)) == 2) {
   colours <- c("#cccccc", "#dd3b3b")
 } else {
-  colours <- RColorBrewer::brewer.pal(
-    n = length(unique(vsd_df$condition)),
-    name = "Set3"
+  colours <- c(
+    "#cccccc",
+    RColorBrewer::brewer.pal(n = length(vsd_df$condition) - 1, name = "Set1")
   )
 }
 
 # Create PCA plot
 p <- DESeq2::plotPCA(vsd, intgroup = "condition") +
-  coord_fixed(ratio = NULL) +
-  labs(
-    title = NULL,
-    colour = "Genotype"
-  ) +
+  coord_cartesian() +
+  labs(title = NULL) +
   theme_cowplot(12) +
+  theme(legend.position = "none") +
   scale_color_manual(
     values = colours
-  )
+  ) +
+  geom_text_repel(aes(label = name))
 
 # Save PCA plot to file
 ggsave(
