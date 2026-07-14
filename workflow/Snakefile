@@ -102,10 +102,6 @@ TARGETS = [
         "results/plots/pirna_sequence_bias/{te}_bargraph.pdf",
         te=TE,
     ),
-    expand(
-        "results/plots/te_pos_coverage/{te}.pdf",
-        te=TE,
-    ),
     expand("results/plots/te_tracks/{te}.pdf", te=TE),
     "results/plots/pca_plot.pdf",
     expand("results/plots/{comparison}/volcano_plot.pdf", comparison=COMPARISONS),
