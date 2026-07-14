@@ -1,7 +1,7 @@
 from snakemake.utils import min_version
 import datetime
 
-VERSION = "v0.6.0"
+VERSION = "v0.6.1"
 
 # Based on:
 # https://github.com/rberrens/SPOCD1-piRNA_directed_DNA_met/tree/master/piRNA_analysis
