@@ -113,6 +113,8 @@ if (plot_type == "line") {
     position_spec <- "identity"
     alpha_val <- 0.6
   }
+  # Distinct point shapes per condition so overlaid samples can be told apart
+  shapes <- rep(c(16, 17, 15, 18, 3, 4, 8), length.out = length(new_levels))
   p <- ggplot(
     df_summary,
     aes(x = factor(distance), y = fraction_per_condition, fill = condition)
@@ -134,9 +136,17 @@ if (plot_type == "line") {
       color = "black",
       position = position_spec
     ) +
+    geom_point(
+      data = df,
+      aes(x = factor(distance), y = fraction_of_te, shape = condition),
+      position = position_spec,
+      colour = "black",
+      size = 0.8
+    ) +
     theme_cowplot(12) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_manual(values = colours) +
+    scale_shape_manual(values = shapes) +
     scale_x_discrete(breaks = function(x) x[as.integer(x) %% 5 == 0]) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.05)))
 }

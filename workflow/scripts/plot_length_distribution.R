@@ -61,10 +61,13 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
     })
     mirna_totals_df <- bind_rows(mirna_totals)
 
-    df <- df %>%
+    df_samples <- df %>%
       left_join(mirna_totals_df, by = "sample") %>%
       group_by(sample) %>%
       mutate(rpm_mirna = count / mirna_total * 1e6) %>%
+      ungroup()
+
+    df <- df_samples %>%
       group_by(condition, length) %>%
       summarise(
         rpm_mirna_avg = mean(rpm_mirna),
@@ -72,6 +75,7 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
         .groups = "drop"
       )
 
+    y_sample <- "rpm_mirna"
     y_value <- "rpm_mirna_avg"
     y_sd <- "rpm_mirna_sd"
     y_label <- "Reads per million miRNA"
@@ -83,12 +87,15 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
     mirna_min <- snakemake@config$length_distribution$mirna_min
     mirna_max <- snakemake@config$length_distribution$mirna_max
 
-    df <- df %>%
+    df_samples <- df %>%
       group_by(sample) %>%
       mutate(
         mirna_sum = sum(count[length >= mirna_min & length <= mirna_max]),
         mi_norm_frequency = count / mirna_sum
       ) %>%
+      ungroup()
+
+    df <- df_samples %>%
       group_by(condition, length) %>%
       summarise(
         mi_norm_condition_avg = mean(mi_norm_frequency),
@@ -96,18 +103,22 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
         .groups = "drop"
       )
 
+    y_sample <- "mi_norm_frequency"
     y_value <- "mi_norm_condition_avg"
     y_sd <- "mi_norm_sd"
     y_label <- "Fraction (miRNA-Normalized)"
   }
 } else {
   print("No miRNA-based normalization applied")
-  df <- df %>%
+  df_samples <- df %>%
     group_by(sample) %>%
     mutate(
       sample_sum = sum(count),
       sample_frequency = count / sample_sum
     ) %>%
+    ungroup()
+
+  df <- df_samples %>%
     group_by(condition, length) %>%
     summarise(
       condition_frequency = mean(sample_frequency),
@@ -116,6 +127,7 @@ if (snakemake@config$length_distribution$apply_mirna_correction) {
     )
 
   # Set plotting and output columns
+  y_sample <- "sample_frequency"
   y_value <- "condition_frequency"
   y_sd <- "sd"
   y_label <- "Fraction (Total Count Normalized)"
@@ -127,6 +139,7 @@ reference_condition <- snakemake@config$reference_condition
 other_conditions <- setdiff(conditions, reference_condition)
 new_levels <- c(reference_condition, other_conditions)
 df$condition <- factor(df$condition, levels = new_levels)
+df_samples$condition <- factor(df_samples$condition, levels = new_levels)
 if (length(conditions) == 2) {
   colours <- c("#cccccc", "#dd3b3b")
 } else {
@@ -136,7 +149,7 @@ if (length(conditions) == 2) {
   )
 }
 
-# Create bar plot with error bars
+# Create bar plot with error bars and individual sample values
 p <- ggplot(
   df,
   aes(x = factor(length), y = .data[[y_value]], fill = condition)
@@ -154,6 +167,14 @@ p <- ggplot(
     width = 0.2,
     color = "black",
     position = position_dodge(width = 0.9)
+  ) +
+  geom_point(
+    data = df_samples,
+    aes(x = factor(length), y = .data[[y_sample]]),
+    position = position_dodge(width = 0.9),
+    colour = "black",
+    size = 0.8,
+    show.legend = FALSE
   ) +
   labs(
     x = "Length (nt)",
