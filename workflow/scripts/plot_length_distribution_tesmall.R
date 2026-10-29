@@ -106,6 +106,15 @@ df_err <- df_total %>%
     x_pos = rlen + nudge(condition)
   )
 
+# Individual sample values, only for the miRNA facet (single class, so the
+# bars are not stacked and the points line up with the bar heights)
+df_points <- df_total %>%
+  filter(feature_group == "miRNA") %>%
+  mutate(
+    feature_group = factor(feature_group, levels = c("TE", "miRNA")),
+    x_pos = rlen + nudge(condition)
+  )
+
 # Class order within each condition's block follows plot_classes (Sense,
 # Antisense, miRNA); condition blocks follow condition_levels (reference
 # condition first).
@@ -164,6 +173,13 @@ p <- ggplot() +
       ymax = condition_total_cpm + total_sd
     ),
     width = 0.15
+  ) +
+  geom_point(
+    data = df_points,
+    aes(x = x_pos, y = total_cpm),
+    colour = "black",
+    size = 0.8,
+    show.legend = FALSE
   ) +
   scale_fill_manual(
     values = fill_colours,

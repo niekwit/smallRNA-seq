@@ -113,8 +113,16 @@ if (plot_type == "line") {
     position_spec <- "identity"
     alpha_val <- 0.6
   }
-  # Distinct point shapes per condition so overlaid samples can be told apart
-  shapes <- rep(c(16, 17, 15, 18, 3, 4, 8), length.out = length(new_levels))
+  # Point styling so overlaid samples can be told apart: with two conditions,
+  # outlined circles filled with the condition colour; otherwise distinct
+  # solid shapes per condition
+  if (length(new_levels) == 2) {
+    shapes <- c(21, 21)
+    point_size <- 1.2
+  } else {
+    shapes <- rep(c(16, 17, 15, 18, 3, 4, 8), length.out = length(new_levels))
+    point_size <- 0.8
+  }
   p <- ggplot(
     df_summary,
     aes(x = factor(distance), y = fraction_per_condition, fill = condition)
@@ -141,7 +149,8 @@ if (plot_type == "line") {
       aes(x = factor(distance), y = fraction_of_te, shape = condition),
       position = position_spec,
       colour = "black",
-      size = 0.8
+      size = point_size,
+      stroke = 0.3
     ) +
     theme_cowplot(12) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
