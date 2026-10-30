@@ -39,7 +39,10 @@ if (length(unique(vsd_df$condition)) == 2) {
 } else {
   colours <- c(
     "#cccccc",
-    RColorBrewer::brewer.pal(n = length(vsd_df$condition) - 1, name = "Set1")
+    RColorBrewer::brewer.pal(
+      n = length(unique(vsd_df$condition)) - 1,
+      name = "Set1"
+    )
   )
 }
 
