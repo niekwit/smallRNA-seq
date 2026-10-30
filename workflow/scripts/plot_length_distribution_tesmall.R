@@ -149,7 +149,11 @@ common_layers <- list(
   scale_fill_manual(values = colours, name = NULL),
   scale_x_continuous(breaks = rlen_breaks, labels = rlen_breaks),
   theme_cowplot(14),
-  theme(legend.position = "bottom", legend.justification = "center")
+  theme(
+    legend.position = "bottom",
+    legend.justification = "center",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
 )
 
 p_te <- ggplot(
@@ -210,7 +214,7 @@ p <- plot_grid(
 ggsave(
   file.path(snakemake@output[["pdf"]]),
   p,
-  width = 11,
+  width = 13.2,
   height = 6
 )
 
