@@ -66,7 +66,7 @@ ngs_tracker:
   project_id: 3
   #run_id: 1 # optional, if not provided a new run will be created
   workflow_name: "smallRNA-seq"
-  workflow_tag: "v0.5.0"
+  workflow_tag: "v0.7.0"
   workflow_system: "snakemake" # snakemake | nextflow | cwl | other
   description: "smallRNA-seq"
   tags:
