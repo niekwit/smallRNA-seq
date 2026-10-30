@@ -93,9 +93,6 @@ ngs_tracker:
     - path: "results/plots/te_small/*.pdf"
       type: results
       description: "TE small"
-    - path: "results/plots/te_pos_coverage/*.pdf"
-      type: results
-      description: "5'end position coverage"
     - path: "results/plots/pirna_sequence_bias/*.pdf"
       type: results
       description: "piRNA 1U/10A sequence bias"
