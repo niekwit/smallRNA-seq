@@ -7,10 +7,9 @@ library(cowplot)
 
 ref_condition <- snakemake@config[["reference_condition"]]
 
-# TEsmall's *.anno.rlen.info classes (columns) that go into this plot, their
-# display labels, and which facet ("TE" vs "miRNA") they belong to.
+# TEsmall's *.anno.rlen.info classes (columns) that go into this plot and
+# which panel ("TE" vs "miRNA") they belong to.
 plot_classes <- c("sense_TE", "anti_TE", "miRNA")
-class_labels <- c(sense_TE = "Sense", anti_TE = "Antisense", miRNA = "miRNA")
 feature_group_map <- c(sense_TE = "TE", anti_TE = "TE", miRNA = "miRNA")
 
 # Get all .anno.rlen.info files
@@ -73,10 +72,9 @@ df_total <- df %>%
   ) %>%
   ungroup()
 
-# --- Stacked bar graph (TE: anti_TE + sense_TE; miRNA: single class),
-# faceted by feature group, with error bars ---
-# Manually offset x-positions so bars can be dodged by condition while still
-# letting ggplot stack sub-classes within each condition's slot.
+# --- Bar graphs: TE (sense up, antisense down) and miRNA, with error bars
+# and individual sample values ---
+# Manually offset x-positions so bars can be dodged by condition.
 # Conditions are laid out symmetrically around each rlen tick, splitting a
 # fixed total width evenly so any number of conditions fits without overlap.
 n_conditions <- length(condition_levels)
@@ -88,114 +86,126 @@ nudge_by_condition <- setNames(
 )
 nudge <- function(condition) nudge_by_condition[as.character(condition)]
 
-df_summary <- df %>%
-  filter(class %in% plot_classes) %>%
-  select(condition, rlen, class, condition_cpm) %>%
-  distinct() %>%
-  mutate(
-    feature_group = factor(feature_group_map[class], levels = c("TE", "miRNA")),
-    x_pos = rlen + nudge(condition),
-    fill_group = paste0(condition, " (", class_labels[class], ")")
-  )
-
-df_err <- df_total %>%
-  select(condition, rlen, feature_group, condition_total_cpm, total_sd) %>%
-  distinct() %>%
-  mutate(
-    feature_group = factor(feature_group, levels = c("TE", "miRNA")),
-    x_pos = rlen + nudge(condition)
-  )
-
-# Individual sample values, only for the miRNA facet (single class, so the
-# bars are not stacked and the points line up with the bar heights)
-df_points <- df_total %>%
-  filter(feature_group == "miRNA") %>%
-  mutate(
-    feature_group = factor(feature_group, levels = c("TE", "miRNA")),
-    x_pos = rlen + nudge(condition)
-  )
-
-# Class order within each condition's block follows plot_classes (Sense,
-# Antisense, miRNA); condition blocks follow condition_levels (reference
-# condition first).
-class_order <- unname(class_labels[plot_classes])
-fill_levels <- as.vector(outer(
-  class_order,
-  condition_levels,
-  function(cl, cond) paste0(cond, " (", cl, ")")
-))
-
-df_summary$fill_group <- factor(df_summary$fill_group, levels = fill_levels)
-
-# One base colour per condition (reference condition is grey, others follow
-# Set1), with a darkened variant used for the "Antisense" class so each
-# condition's bars stay visually grouped in the legend.
+# Reference condition is grey, others follow Set1
 if (n_conditions == 2) {
-  base_colours <- c("#cccccc", "#dd3b3b")
+  colours <- c("#cccccc", "#dd3b3b")
 } else {
-  base_colours <- c(
+  colours <- c(
     "#cccccc",
     RColorBrewer::brewer.pal(n = n_conditions - 1, name = "Set1")
   )
 }
-names(base_colours) <- condition_levels
+names(colours) <- condition_levels
 
-darken <- function(hex, factor = 0.55) {
-  rgb_mat <- grDevices::col2rgb(hex) * factor
-  grDevices::rgb(rgb_mat[1, ], rgb_mat[2, ], rgb_mat[3, ], maxColorValue = 255)
+# TE panel: antisense CPM is plotted as negative values to show the
+# sense/antisense split more clearly
+te_classes <- c("sense_TE", "anti_TE")
+
+df_te_points <- df %>%
+  filter(class %in% te_classes) %>%
+  mutate(
+    cpm_signed = cpm * if_else(class == "anti_TE", -1, 1),
+    x_pos = rlen + nudge(condition)
+  )
+
+df_te <- df_te_points %>%
+  group_by(condition, rlen, class, x_pos) %>%
+  summarise(
+    condition_cpm_signed = mean(cpm_signed),
+    sd = sd(cpm_signed),
+    .groups = "drop"
+  )
+
+# miRNA panel
+df_mirna_points <- df_total %>%
+  filter(feature_group == "miRNA") %>%
+  mutate(x_pos = rlen + nudge(condition))
+
+df_mirna <- df_mirna_points %>%
+  select(
+    feature_group,
+    condition,
+    rlen,
+    x_pos,
+    condition_total_cpm,
+    total_sd
+  ) %>%
+  distinct()
+
+# Shared styling for both panels
+rlen_breaks <- sort(unique(df$rlen))
+point_layer <- function(data, y) {
+  geom_point(
+    data = data,
+    aes(x = x_pos, y = .data[[y]]),
+    position = position_jitter(width = 0.05, height = 0, seed = 1),
+    size = 1.5,
+    shape = 16,
+    colour = "black",
+    show.legend = FALSE
+  )
 }
-
-fill_colours <- setNames(
-  as.vector(outer(
-    class_order,
-    condition_levels,
-    function(cl, cond) {
-      base <- base_colours[cond]
-      ifelse(cl == "Antisense", darken(base), base)
-    }
-  )),
-  fill_levels
+common_layers <- list(
+  scale_fill_manual(values = colours, name = NULL),
+  scale_x_continuous(breaks = rlen_breaks, labels = rlen_breaks),
+  theme_cowplot(14),
+  theme(legend.position = "bottom", legend.justification = "center")
 )
 
-p <- ggplot() +
-  geom_col(
-    data = df_summary,
-    aes(x = x_pos, y = condition_cpm, fill = fill_group, group = x_pos),
-    position = position_stack(reverse = TRUE),
-    width = bar_width,
-    colour = "black"
-  ) +
+p_te <- ggplot(
+  df_te,
+  aes(x = x_pos, y = condition_cpm_signed, fill = condition)
+) +
+  geom_col(width = bar_width, colour = "black") +
   geom_errorbar(
-    data = df_err,
     aes(
-      x = x_pos,
+      ymin = condition_cpm_signed - sd,
+      ymax = condition_cpm_signed + sd
+    ),
+    width = 0.15
+  ) +
+  point_layer(df_te_points, "cpm_signed") +
+  geom_hline(yintercept = 0, colour = "black") +
+  facet_wrap(~"TE") +
+  common_layers +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.05))) +
+  labs(
+    x = "Length (nt)",
+    y = "Reads per million (CPM)\nAntisense (-) / Sense (+)"
+  )
+
+p_mirna <- ggplot(
+  df_mirna,
+  aes(x = x_pos, y = condition_total_cpm, fill = condition)
+) +
+  geom_col(width = bar_width, colour = "black") +
+  geom_errorbar(
+    aes(
       ymin = condition_total_cpm - total_sd,
       ymax = condition_total_cpm + total_sd
     ),
     width = 0.15
   ) +
-  geom_point(
-    data = df_points,
-    aes(x = x_pos, y = total_cpm),
-    colour = "black",
-    size = 0.8,
-    show.legend = FALSE
-  ) +
-  scale_fill_manual(
-    values = fill_colours,
-    name = NULL
-  ) +
-  guides(fill = guide_legend(nrow = length(class_order))) +
-  facet_wrap(~feature_group, nrow = 1, scales = "free_y") +
-  scale_x_continuous(
-    breaks = sort(unique(df_summary$rlen)),
-    labels = sort(unique(df_summary$rlen))
-  ) +
+  point_layer(df_mirna_points, "total_cpm") +
+  facet_wrap(~feature_group) +
+  common_layers +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
-  labs(x = "Length (nt)", y = "Reads per million (CPM)") +
-  theme_cowplot(14) +
-  theme(legend.position = "bottom")
+  labs(x = "Length (nt)", y = "Reads per million (CPM)")
 
+# Combine panels with one shared legend
+legend <- get_plot_component(p_te, "guide-box-bottom")
+p <- plot_grid(
+  plot_grid(
+    p_te + theme(legend.position = "none"),
+    p_mirna + theme(legend.position = "none"),
+    nrow = 1,
+    align = "h",
+    axis = "tb"
+  ),
+  legend,
+  ncol = 1,
+  rel_heights = c(1, 0.08)
+)
 
 ggsave(
   file.path(snakemake@output[["pdf"]]),
