@@ -58,7 +58,6 @@ Prepare your analysis directory as follows:
     │   ├── sequence_bias_pirna.R
     │   ├── stranded_te_bigwig.py
     │   ├── strand_summary_table.py
-    │   ├── te_pos_coverage.R
     │   ├── te_small_bargraph.R
     │   ├── te_small_cpm_te_classes.R
     │   ├── te_small.py
@@ -67,7 +66,7 @@ Prepare your analysis directory as follows:
     │   └── te_small_top_families.R
     └── Snakefile
 
-12 directories, 38 files
+12 directories, 37 files
 ```
 
 The workflow and config directories can be copied from this repository.
@@ -91,7 +90,6 @@ cutadapt:
   extra: "-m 16 --trimmed-only -q 20"
 
 tesmall:
-  run_tesmall: False
   dbfolder: /path/to/te_small_db
   minlen: 16
   maxlen: 36
@@ -103,7 +101,7 @@ tesmall:
   te_classes: All
 
 length_distribution:
-  apply_mirna_correction: TRUE
+  apply_mirna_correction: False # False will total count normalise
   mirna_correction_method: length # length or align
 
   # miRNA length range for correction
@@ -251,7 +249,7 @@ results/
 │   ├── WT_1_nt_bias.csv
 │   └── strand_summary.csv
 ├── plots
-│   ├── length_distribution_total_count_normalisation.csv
+│   ├── length_distribution_total_count_normalisation.csv   # name depends on length_distribution settings, see below
 │   ├── length_distribution_total_count_normalisation.pdf
 │   ├── length_distribution_tesmall.csv
 │   ├── length_distribution_tesmall.pdf
@@ -263,8 +261,6 @@ results/
 │   │   ├── L1MdTf_III_frequencies.csv
 │   │   └── L1MdTf_III_logo.pdf
 │   ├── rna_counts.pdf
-│   ├── te_pos_coverage
-│   │   └── L1MdTf_III.pdf
 │   ├── te_small
 │   │   ├── bargraph.pdf
 │   │   ├── piechart.csv
@@ -301,18 +297,28 @@ results/
 ├── te_small
 │   └── KO_1
 │       ├── count_summary.txt
+│       ├── KO_1.3trf_free.bam
 │       ├── KO_1.anno.rlen.info
+│       ├── KO_1.rm_rRNA.fastq
 │       └── report.html
 └── trimmed
     ├── KO_1_qc.txt
     └── WT_1_qc.txt
 ```
 
+The suffix of the `length_distribution_*` files reflects the normalisation set under `length_distribution` in `config.yaml`:
+
+| `apply_mirna_correction` | `mirna_correction_method` | File suffix                         |
+| ------------------------ | ------------------------- | ----------------------------------- |
+| `False`                  | (ignored)                 | `total_count_normalisation`         |
+| `True`                   | `length`                  | `mirna_length_count_normalisation`  |
+| `True`                   | `align`                   | `mirna_aligned_count_normalisation` |
+
 ## Citation
 
 If you find this workflow useful, please consider citing it:
 
-> Niek Wit. (2026). niekwit/smallRNA-seq: v0.4.0 (v0.4.0). Zenodo. https://doi.org/10.5281/zenodo.19258358
+> Niek Wit. (2026). niekwit/smallRNA-seq. Zenodo. https://doi.org/10.5281/zenodo.19258358
 
 ## References
 
